@@ -1,9 +1,12 @@
 package jadx.core.dex.info;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
+
+import me.yricky.oh.abcd.isa.Asm;
 
 import jadx.api.plugins.input.data.IMethodProto;
 import jadx.api.plugins.input.data.IMethodRef;
@@ -54,6 +57,23 @@ public final class MethodInfo implements Comparable<MethodInfo> {
 		if (uniqId != 0) {
 			infoStorage.putByUniqId(uniqId, uniqMth);
 		}
+		return uniqMth;
+	}
+
+	public static MethodInfo fromAsm(RootNode root, Asm.AsmItem asmItem, int argc, String name) {
+		InfoStorage infoStorage = root.getInfoStorage();
+
+		ArgType parentClsType = ArgType.parse("Object");
+		ClassInfo parentClass = ClassInfo.fromType(root, parentClsType);
+		ArgType returnType = ArgType.parse("Object");
+		List<ArgType> args = new ArrayList<>();
+
+		for (int i = 0; i < argc; i++) {
+			args.add(ArgType.parse("Object"));
+		}
+
+		MethodInfo newMth = new MethodInfo(parentClass, name, args, returnType);
+		MethodInfo uniqMth = infoStorage.putMethod(newMth);
 		return uniqMth;
 	}
 

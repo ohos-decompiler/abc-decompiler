@@ -9,8 +9,6 @@ import jadx.api.plugins.input.data.ICodeReader;
 import jadx.api.plugins.input.data.IMethodData;
 import jadx.api.plugins.input.data.annotations.IAnnotation;
 import jadx.api.plugins.input.data.attributes.IJadxAttribute;
-import jadx.api.plugins.input.data.attributes.types.AnnotationMethodParamsAttr;
-import jadx.api.plugins.utils.Utils;
 import jadx.plugins.input.dex.sections.annotations.AnnotationsParser;
 import jadx.plugins.input.dex.smali.SmaliPrinter;
 
@@ -83,8 +81,6 @@ public class DexMethodData implements IMethodData {
 	@Override
 	public List<IJadxAttribute> getAttributes() {
 		List<IJadxAttribute> list = new ArrayList<>();
-		DexAnnotationsConvert.forMethod(list, getAnnotations());
-		Utils.addToList(list, AnnotationMethodParamsAttr.pack(getParamsAnnotations()));
 		return list;
 	}
 

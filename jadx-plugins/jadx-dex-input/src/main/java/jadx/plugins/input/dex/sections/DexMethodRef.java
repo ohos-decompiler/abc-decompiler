@@ -1,6 +1,9 @@
 package jadx.plugins.input.dex.sections;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import me.yricky.oh.abcd.cfm.AbcMethod;
 
 import jadx.api.plugins.input.data.IMethodRef;
 import jadx.api.plugins.utils.Utils;
@@ -18,8 +21,20 @@ public class DexMethodRef implements IMethodRef {
 	private int dexIdx;
 	private SectionReader sectionReader;
 
+	public AbcMethod abcMethod;
+
 	public void initUniqId(DexReader dexReader, int idx) {
 		this.uniqId = (dexReader.getUniqId() & 0xFFFF) << 16 | (idx & 0xFFFF);
+	}
+
+	public AbcMethod getAbcMethod() {
+		return abcMethod;
+	}
+
+	public void setAbcMethod(AbcMethod abcMethod) {
+		this.abcMethod = abcMethod;
+		this.name = abcMethod.getName();
+		// this.returnType = "Object";
 	}
 
 	@Override
@@ -48,6 +63,7 @@ public class DexMethodRef implements IMethodRef {
 		parentClassType = null;
 		returnType = null;
 		argTypes = null;
+		abcMethod = null;
 	}
 
 	@Override
@@ -79,6 +95,13 @@ public class DexMethodRef implements IMethodRef {
 
 	@Override
 	public List<String> getArgTypes() {
+		if (argTypes == null) {
+			argTypes = new ArrayList<>();
+			int numArgs = abcMethod.getCodeItem().getNumArgs();
+			for (int i = 0; i < numArgs; i++) {
+				argTypes.add("Object");
+			}
+		}
 		return argTypes;
 	}
 

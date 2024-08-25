@@ -1,5 +1,7 @@
 package jadx.api.plugins.input.insns;
 
+import me.yricky.oh.abcd.isa.Asm;
+
 import jadx.api.plugins.input.data.ICallSite;
 import jadx.api.plugins.input.data.IFieldRef;
 import jadx.api.plugins.input.data.IMethodHandle;
@@ -16,6 +18,8 @@ public interface InsnData {
 	int getFileOffset(); // offset within dex file
 
 	Opcode getOpcode();
+
+	Asm.AsmItem getAsmItem();
 
 	String getOpcodeMnemonic();
 

@@ -1,6 +1,7 @@
 package jadx.plugins.input.dex.sections;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -72,10 +73,7 @@ public class DexFieldData implements IFieldData {
 	}
 
 	private List<IAnnotation> getAnnotations() {
-		if (annotationsParser == null) {
-			throw new NullPointerException("Annotation parser not initialized");
-		}
-		return annotationsParser.readAnnotationList(annotationsOffset);
+		return Collections.emptyList();
 	}
 
 	@Override

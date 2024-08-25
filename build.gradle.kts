@@ -23,7 +23,12 @@ allprojects {
 	apply(plugin = "se.patrikerdes.use-latest-versions")
 
 	repositories {
-		mavenCentral()
+		repositories {
+			mavenLocal()
+			maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+			maven("https://maven.aliyun.com/repository/central")
+			maven("https://maven.aliyun.com/repository/public/")
+		}
 	}
 
 	configure<SpotlessExtension> {

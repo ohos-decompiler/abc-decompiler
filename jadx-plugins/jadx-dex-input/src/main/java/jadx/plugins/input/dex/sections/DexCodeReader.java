@@ -9,6 +9,10 @@ import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.yricky.oh.abcd.cfm.AbcMethod;
+import me.yricky.oh.abcd.code.Code;
+import me.yricky.oh.abcd.isa.Asm;
+
 import jadx.api.plugins.input.data.ICatch;
 import jadx.api.plugins.input.data.ICodeReader;
 import jadx.api.plugins.input.data.IDebugInfo;
@@ -26,14 +30,20 @@ public class DexCodeReader implements ICodeReader {
 
 	private final SectionReader in;
 	private int mthId;
+	public AbcMethod abcMethod;
 
 	public DexCodeReader(SectionReader in) {
 		this.in = in;
 	}
 
+	public DexCodeReader(SectionReader in, AbcMethod abcMethod) {
+		this.in = in;
+		this.abcMethod = abcMethod;
+	}
+
 	@Override
 	public DexCodeReader copy() {
-		DexCodeReader copy = new DexCodeReader(in.copy());
+		DexCodeReader copy = new DexCodeReader(in.copy(), abcMethod);
 		copy.setMthId(this.getMthId());
 		return copy;
 	}
@@ -44,50 +54,34 @@ public class DexCodeReader implements ICodeReader {
 
 	@Override
 	public int getRegistersCount() {
-		return in.pos(0).readUShort();
+		Code codeItem = abcMethod.getCodeItem();
+		int numVRegs = codeItem.getNumVRegs();
+		int numArgs = codeItem.getNumArgs();
+		return numVRegs + numArgs + 1; // for acc
 	}
 
 	@Override
 	public int getArgsStartReg() {
-		return -1;
+		return abcMethod.getCodeItem().getNumVRegs();
 	}
 
 	@Override
 	public int getUnitsCount() {
-		return in.pos(12).readInt();
+		Code code = abcMethod.getCodeItem();
+		return code.getCodeSize();
 	}
 
 	@Override
 	public void visitInstructions(Consumer<InsnData> insnConsumer) {
 		DexInsnData insnData = new DexInsnData(this, in.copy());
-		in.pos(12);
-		int size = in.readInt();
-		int offset = 0; // in code units (2 byte)
-		while (offset < size) {
-			int insnStart = in.getAbsPos();
-			int opcodeUnit = in.readUShort();
-			DexInsnInfo insnInfo = DexInsnInfo.get(opcodeUnit);
-			insnData.setInsnStart(insnStart);
-			insnData.setOffset(offset);
-			insnData.setInsnInfo(insnInfo);
-			insnData.setOpcodeUnit(opcodeUnit);
-			insnData.setPayload(null);
-			insnData.setDecoded(false);
-			if (insnInfo != null) {
-				DexInsnFormat format = insnInfo.getFormat();
-				insnData.setRegsCount(format.getRegsCount());
-				insnData.setLength(format.getLength());
-			} else {
-				insnData.setRegsCount(0);
-				insnData.setLength(1);
-			}
 
+		Code code = abcMethod.getCodeItem();
+		Asm asm = code.getAsm();
+		List<Asm.AsmItem> asmItems = asm.getList();
+
+		for (Asm.AsmItem asmItem : asmItems) {
+			insnData.setAsmItem(asmItem);
 			insnConsumer.accept(insnData);
-
-			if (!insnData.isDecoded()) {
-				skip(insnData);
-			}
-			offset += insnData.getLength();
 		}
 	}
 

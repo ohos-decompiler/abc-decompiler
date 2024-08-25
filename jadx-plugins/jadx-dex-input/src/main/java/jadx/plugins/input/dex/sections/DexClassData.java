@@ -10,6 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import me.yricky.oh.abcd.cfm.AbcClass;
+import me.yricky.oh.abcd.cfm.AbcField;
+import me.yricky.oh.abcd.cfm.AbcMethod;
+import me.yricky.oh.abcd.cfm.ClassItem;
+
 import jadx.api.plugins.input.data.IClassData;
 import jadx.api.plugins.input.data.IFieldData;
 import jadx.api.plugins.input.data.IMethodData;
@@ -27,52 +32,89 @@ public class DexClassData implements IClassData {
 
 	private final SectionReader in;
 	private final AnnotationsParser annotationsParser;
+	public AbcClass abcClass;
 
 	public DexClassData(SectionReader sectionReader, AnnotationsParser annotationsParser) {
 		this.in = sectionReader;
 		this.annotationsParser = annotationsParser;
 	}
 
+	public DexClassData(SectionReader sectionReader, AnnotationsParser annotationsParser, AbcClass abcClass) {
+		this.in = sectionReader;
+		this.annotationsParser = annotationsParser;
+		this.abcClass = abcClass;
+	}
+
 	@Override
 	public IClassData copy() {
-		return new DexClassData(in.copy(), annotationsParser.copy());
+		return new DexClassData(in, null, abcClass);
 	}
 
 	@Override
 	public String getType() {
-		int typeIdx = in.pos(0).readInt();
-		String clsType = in.getType(typeIdx);
-		if (clsType == null) {
-			throw new NullPointerException("Unknown class type");
+		return abcClass.getName();
+	}
+
+	public class AccessFlags {
+		private final int value;
+
+		public AccessFlags(int value) {
+			this.value = value;
 		}
-		return clsType;
+
+		public boolean isPublic() {
+			return (value & 0x0001) != 0;
+		}
+
+		public boolean isFinal() {
+			return (value & 0x0010) != 0;
+		}
+
+		public boolean isInterface() {
+			return (value & 0x0200) != 0;
+		}
+
+		public boolean isAbstract() {
+			return (value & 0x0400) != 0;
+		}
+
+		public boolean isSynthetic() {
+			return (value & 0x1000) != 0;
+		}
+
+		public boolean isAnnotation() {
+			return (value & 0x2000) != 0;
+		}
+
+		public boolean isEnum() {
+			return (value & 0x4000) != 0;
+		}
 	}
 
 	@Override
 	public int getAccessFlags() {
-		return in.pos(4).readInt();
+		// AccessFlags accessFlags = new AccessFlags(abcClass.getAccessFlag());
+		return abcClass.getAccessFlag();
 	}
 
 	@Nullable
 	@Override
 	public String getSuperType() {
-		int typeIdx = in.pos(2 * 4).readInt();
-		return in.getType(typeIdx);
+		ClassItem superClass = abcClass.getSuperClass();
+		if (superClass == null) {
+			return "Object";
+		}
+		return superClass.getName();
 	}
 
 	@Override
 	public List<String> getInterfacesTypes() {
-		int offset = in.pos(3 * 4).readInt();
-		if (offset == 0) {
-			return Collections.emptyList();
-		}
-		return in.absPos(offset).readTypeList();
+		return Collections.emptyList();
 	}
 
 	@Nullable
 	private String getSourceFile() {
-		int strIdx = in.pos(4 * 4).readInt();
-		return in.getString(strIdx);
+		return null;
 	}
 
 	@Override
@@ -94,30 +136,29 @@ public class DexClassData implements IClassData {
 
 	@Override
 	public void visitFieldsAndMethods(ISeqConsumer<IFieldData> fieldConsumer, ISeqConsumer<IMethodData> mthConsumer) {
-		int classDataOff = getClassDataOff();
-		if (classDataOff == 0) {
-			return;
-		}
-		SectionReader data = in.copy(classDataOff);
-		int staticFieldsCount = data.readUleb128();
-		int instanceFieldsCount = data.readUleb128();
-		int directMthCount = data.readUleb128();
-		int virtualMthCount = data.readUleb128();
 
-		fieldConsumer.init(staticFieldsCount + instanceFieldsCount);
-		mthConsumer.init(directMthCount + virtualMthCount);
+		int fieldsCount = abcClass.getNumFields();
+		int mthCount = abcClass.getNumMethods();
 
-		annotationsParser.setOffset(getAnnotationsOff());
-		visitFields(fieldConsumer, data, staticFieldsCount, instanceFieldsCount);
-		visitMethods(mthConsumer, data, directMthCount, virtualMthCount);
+		fieldConsumer.init(fieldsCount);
+		mthConsumer.init(mthCount);
+
+		visitFields(fieldConsumer);
+		visitMethods(mthConsumer);
 	}
 
-	private void visitFields(Consumer<IFieldData> fieldConsumer, SectionReader data, int staticFieldsCount, int instanceFieldsCount) {
-		Map<Integer, Integer> annotationOffsetMap = annotationsParser.readFieldsAnnotationOffsetMap();
+	private void visitFields(Consumer<IFieldData> fieldConsumer) {
 		DexFieldData fieldData = new DexFieldData(annotationsParser);
-		fieldData.setParentClassType(getType());
-		readFields(fieldConsumer, data, fieldData, staticFieldsCount, annotationOffsetMap, true);
-		readFields(fieldConsumer, data, fieldData, instanceFieldsCount, annotationOffsetMap, false);
+		fieldData.setParentClassType(abcClass.getName());
+
+		List<AbcField> fields = abcClass.getFields();
+		for (AbcField field : fields) {
+			fieldData.setName(field.getName());
+			fieldData.setType(field.getType().getName());
+			fieldData.setAccessFlags(jadx.api.plugins.input.data.AccessFlags.PUBLIC);
+			fieldData.setConstValue(null);
+			fieldConsumer.accept(fieldData);
+		}
 	}
 
 	private void readFields(Consumer<IFieldData> fieldConsumer, SectionReader data, DexFieldData fieldData, int count,
@@ -135,14 +176,28 @@ public class DexClassData implements IClassData {
 		}
 	}
 
-	private void visitMethods(Consumer<IMethodData> mthConsumer, SectionReader data, int directMthCount, int virtualMthCount) {
+	private void visitMethods(Consumer<IMethodData> mthConsumer) {
 		DexMethodData methodData = new DexMethodData(annotationsParser);
 		methodData.setMethodRef(new DexMethodRef());
-		Map<Integer, Integer> annotationOffsetMap = annotationsParser.readMethodsAnnotationOffsetMap();
-		Map<Integer, Integer> paramsAnnOffsetMap = annotationsParser.readMethodParamsAnnRefOffsetMap();
 
-		readMethods(mthConsumer, data, methodData, directMthCount, annotationOffsetMap, paramsAnnOffsetMap);
-		readMethods(mthConsumer, data, methodData, virtualMthCount, annotationOffsetMap, paramsAnnOffsetMap);
+		List<AbcMethod> mths = abcClass.getMethods();
+		int idx = 0;
+		for (AbcMethod mth : mths) {
+			DexMethodRef methodRef = methodData.getMethodRef();
+			methodRef.reset();
+			methodRef.initUniqId(in.getDexReader(), idx);
+			idx += 1;
+
+			methodRef.setDexIdx(in.getDexReader().getUniqId());
+			methodRef.setAbcMethod(mth);
+
+			methodData.setAccessFlags(jadx.api.plugins.input.data.AccessFlags.PUBLIC);
+
+			DexCodeReader dexCodeReader = new DexCodeReader(in.copy(), mth);
+			methodData.setCodeReader(dexCodeReader);
+
+			mthConsumer.accept(methodData);
+		}
 	}
 
 	private void readMethods(Consumer<IMethodData> mthConsumer, SectionReader data, DexMethodData methodData, int count,
@@ -197,7 +252,7 @@ public class DexClassData implements IClassData {
 		if (sourceFile != null && !sourceFile.isEmpty()) {
 			list.add(new SourceFileAttr(sourceFile));
 		}
-		DexAnnotationsConvert.forClass(getType(), list, getAnnotations());
+		// DexAnnotationsConvert.forClass(getType(), list, getAnnotations());
 		return list;
 	}
 

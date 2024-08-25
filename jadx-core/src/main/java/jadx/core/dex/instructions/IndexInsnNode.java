@@ -2,6 +2,7 @@ package jadx.core.dex.instructions;
 
 import java.util.Objects;
 
+import jadx.core.dex.info.FieldInfo;
 import jadx.core.dex.instructions.args.ArgType;
 import jadx.core.dex.nodes.InsnNode;
 import jadx.core.utils.InsnUtils;
@@ -18,6 +19,12 @@ public class IndexInsnNode extends InsnNode {
 
 	public Object getIndex() {
 		return index;
+	}
+
+	public String getFieldName() {
+		FieldInfo fieldInfo = (FieldInfo) index;
+		String name = fieldInfo.getName();
+		return name;
 	}
 
 	public void updateIndex(Object index) {

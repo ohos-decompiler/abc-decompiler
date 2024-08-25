@@ -175,7 +175,7 @@ public class InsnNode extends LineAttrNode {
 		addArg(InsnArg.reg(insn, i, type));
 	}
 
-	protected void addReg(int regNum, ArgType type) {
+	public void addReg(int regNum, ArgType type) {
 		addArg(InsnArg.reg(regNum, type));
 	}
 

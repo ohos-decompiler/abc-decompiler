@@ -123,6 +123,7 @@ public class RootNode {
 				try {
 					addClassNode(new ClassNode(RootNode.this, cls));
 				} catch (Exception e) {
+					// e.printStackTrace();
 					addDummyClass(cls, e);
 				}
 				Utils.checkThreadInterrupt();

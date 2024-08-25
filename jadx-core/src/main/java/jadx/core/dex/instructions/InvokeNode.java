@@ -81,7 +81,7 @@ public class InvokeNode extends BaseInvokeNode {
 	}
 
 	public int getFirstArgOffset() {
-		return type == InvokeType.STATIC ? 0 : 1;
+		return 0;
 	}
 
 	@Override

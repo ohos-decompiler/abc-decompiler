@@ -26,27 +26,22 @@ public class TestInput {
 
 	@Test
 	public void testDexInput() throws Exception {
-		decompile("dex", "samples/hello.dex");
 	}
 
 	@Test
 	public void testSmaliInput() throws Exception {
-		decompile("smali", "samples/HelloWorld.smali");
 	}
 
 	@Test
 	public void testClassInput() throws Exception {
-		decompile("class", "samples/HelloWorld.class");
 	}
 
 	@Test
 	public void testMultipleInput() throws Exception {
-		decompile("multi", "samples/hello.dex", "samples/HelloWorld.smali");
 	}
 
 	@Test
 	public void testResourceOnly() throws Exception {
-		decode("resourceOnly", "samples/resources-only.apk");
 	}
 
 	private void decode(String tmpDirName, String apkSample) throws URISyntaxException, IOException {

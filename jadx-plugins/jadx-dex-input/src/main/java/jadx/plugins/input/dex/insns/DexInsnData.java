@@ -2,6 +2,8 @@ package jadx.plugins.input.dex.insns;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.yricky.oh.abcd.isa.Asm;
+
 import jadx.api.plugins.input.data.ICallSite;
 import jadx.api.plugins.input.data.IFieldRef;
 import jadx.api.plugins.input.data.IMethodHandle;
@@ -25,6 +27,8 @@ public class DexInsnData implements InsnData {
 	private int length;
 	private int insnStart;
 
+	public Asm.AsmItem asmItem;
+
 	private int offset;
 	private int[] argsReg = new int[5];
 	private int regsCount;
@@ -47,6 +51,11 @@ public class DexInsnData implements InsnData {
 		}
 	}
 
+	public void setAsmItem(Asm.AsmItem asmItem) {
+		this.asmItem = asmItem;
+		offset = asmItem.getCodeOffset();
+	}
+
 	@Override
 	public int getOffset() {
 		return offset;
@@ -64,6 +73,11 @@ public class DexInsnData implements InsnData {
 			return Opcode.UNKNOWN;
 		}
 		return info.getApiOpcode();
+	}
+
+	@Override
+	public Asm.AsmItem getAsmItem() {
+		return asmItem;
 	}
 
 	@Override

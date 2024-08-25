@@ -16,7 +16,6 @@ import jadx.core.dex.nodes.RootNode;
 import jadx.core.dex.visitors.typeinference.TypeCompareEnum;
 import jadx.core.utils.ListUtils;
 import jadx.core.utils.Utils;
-import jadx.core.utils.exceptions.JadxRuntimeException;
 
 public abstract class ArgType {
 	public static final ArgType INT = primitive(PrimitiveType.INT);
@@ -457,7 +456,7 @@ public abstract class ArgType {
 		}
 	}
 
-	private static final class ArrayArg extends KnownType {
+	public static final class ArrayArg extends KnownType {
 		private static final PrimitiveType[] ARRAY_POSSIBLES = new PrimitiveType[] { PrimitiveType.ARRAY };
 		private final ArgType arrayElement;
 
@@ -732,20 +731,23 @@ public abstract class ArgType {
 	}
 
 	public static ArgType parse(String type) {
-		if (type == null || type.isEmpty()) {
-			throw new JadxRuntimeException("Failed to parse type string: " + type);
-		}
-		char f = type.charAt(0);
-		switch (f) {
-			case 'L':
-				return object(type);
-			case 'T':
-				return genericType(type.substring(1, type.length() - 1));
-			case '[':
-				return array(parse(type.substring(1)));
-			default:
-				return parse(f);
-		}
+
+		return ArgType.OBJECT;
+		//
+		// if (type == null || type.isEmpty()) {
+		// throw new JadxRuntimeException("Failed to parse type string: " + type);
+		// }
+		// char f = type.charAt(0);
+		// switch (f) {
+		// case 'L':
+		// return object(type);
+		// case 'T':
+		// return genericType(type.substring(1, type.length() - 1));
+		// case '[':
+		// return array(parse(type.substring(1)));
+		// default:
+		// return parse(f);
+		// }
 	}
 
 	public static ArgType parse(char f) {

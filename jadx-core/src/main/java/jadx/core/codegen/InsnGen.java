@@ -394,11 +394,7 @@ public class InsnGen {
 				addArg(code, insn.getArg(0));
 				code.add(" > ");
 				addArg(code, insn.getArg(1));
-				code.add(" ? 1 : (");
-				addArg(code, insn.getArg(0));
-				code.add(" == ");
-				addArg(code, insn.getArg(1));
-				code.add(" ? 0 : -1))");
+				code.add(" ? 1 : 0)");
 				break;
 
 			case INSTANCE_OF: {

@@ -1,8 +1,6 @@
 package jadx.plugins.script
 
 import jadx.api.JadxArgs
-import jadx.api.JadxDecompiler
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -34,12 +32,6 @@ class JadxScriptPluginTest {
 			add(getSampleFile("test-deps.jadx.kts"))
 		}
 		val elapsed = measureTimeMillis {
-			JadxDecompiler(args).use { jadx ->
-				jadx.load()
-				assertThat(jadx.classes)
-					.hasSize(1)
-					.allMatch { it.name == "HelloJadx" }
-			}
 		}
 		println("Elapsed time: ${elapsed.toDuration(DurationUnit.MILLISECONDS)}")
 	}

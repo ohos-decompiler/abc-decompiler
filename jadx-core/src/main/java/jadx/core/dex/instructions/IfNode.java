@@ -33,6 +33,14 @@ public class IfNode extends GotoNode {
 		}
 	}
 
+	public IfNode(int target, int reg, IfOp op) {
+		super(InsnType.IF, target, 2);
+		this.op = op;
+		ArgType argType = narrowTypeByOp(op);
+		addArg(InsnArg.reg(reg, argType));
+		addArg(InsnArg.lit(0, argType));
+	}
+
 	public IfNode(IfOp op, int targetOffset, InsnArg arg1, InsnArg arg2) {
 		this(op, targetOffset);
 		addArg(arg1);

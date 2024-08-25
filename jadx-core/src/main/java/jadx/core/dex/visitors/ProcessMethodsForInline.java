@@ -43,6 +43,11 @@ public class ProcessMethodsForInline extends AbstractVisitor {
 		if (mth.isNoCode() || mth.contains(AFlag.DONT_GENERATE)) {
 			return false;
 		}
+
+		if (mth == null) {
+			return false;
+		}
+
 		AccessInfo accessFlags = mth.getAccessFlags();
 		boolean isSynthetic = accessFlags.isSynthetic() || mth.getName().contains("$");
 		return isSynthetic && canInlineMethod(mth, accessFlags);

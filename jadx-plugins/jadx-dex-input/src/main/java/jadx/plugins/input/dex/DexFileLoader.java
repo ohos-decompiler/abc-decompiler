@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,10 +19,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jadx.api.plugins.utils.CommonFileUtils;
+import me.yricky.oh.abcd.AbcBuf;
+
 import jadx.api.plugins.utils.ZipSecurity;
 import jadx.plugins.input.dex.sections.DexConsts;
-import jadx.plugins.input.dex.utils.DexCheckSum;
+
+import static me.yricky.oh.common.MiscKt.wrapAsLEByteBuf;
 
 public class DexFileLoader {
 	private static final Logger LOG = LoggerFactory.getLogger(DexFileLoader.class);
@@ -53,6 +57,12 @@ public class DexFileLoader {
 		}
 	}
 
+	private AbcBuf loadAbcFile(String fname) throws IOException {
+		File file = new File(fname);
+		MappedByteBuffer mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+		return new AbcBuf(file.getPath(), wrapAsLEByteBuf(mmap));
+	}
+
 	private List<DexReader> load(@Nullable File file, InputStream inputStream, String fileName) throws IOException {
 		try (InputStream in = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream)) {
 			byte[] magic = new byte[DexConsts.MAX_MAGIC_SIZE];
@@ -60,26 +70,18 @@ public class DexFileLoader {
 			if (in.read(magic) != magic.length) {
 				return Collections.emptyList();
 			}
-			if (isStartWithBytes(magic, DexConsts.DEX_FILE_MAGIC) || fileName.endsWith(".dex")) {
+			if (isStartWithBytes(magic, DexConsts.ABC_FILE_MAGIC) || fileName.endsWith(".abc")) {
 				in.reset();
 				byte[] content = readAllBytes(in);
 				DexReader dexReader = loadDexReader(fileName, content);
+				dexReader.setAbc(loadAbcFile(fileName));
 				return Collections.singletonList(dexReader);
-			}
-			if (file != null) {
-				// allow only top level zip files
-				if (isStartWithBytes(magic, DexConsts.ZIP_FILE_MAGIC) || CommonFileUtils.isZipFileExt(fileName)) {
-					return collectDexFromZip(file);
-				}
 			}
 			return Collections.emptyList();
 		}
 	}
 
 	public DexReader loadDexReader(String fileName, byte[] content) {
-		if (options.isVerifyChecksum()) {
-			DexCheckSum.verify(content, fileName);
-		}
 		return new DexReader(getNextUniqId(), fileName, content);
 	}
 

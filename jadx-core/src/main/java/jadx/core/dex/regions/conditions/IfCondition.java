@@ -218,10 +218,10 @@ public final class IfCondition extends AttrNode {
 		switch (wrapInsn.getType()) {
 			case CMP_L:
 			case CMP_G:
-				if (lit == 0) {
-					IfNode insn = c.getInsn();
-					insn.changeCondition(insn.getOp(), wrapInsn.getArg(0), wrapInsn.getArg(1));
-				}
+				// if (lit == 0) {
+				// IfNode insn = c.getInsn();
+				// insn.changeCondition(insn.getOp(), wrapInsn.getArg(0), wrapInsn.getArg(1));
+				// }
 				break;
 
 			case ARITH:

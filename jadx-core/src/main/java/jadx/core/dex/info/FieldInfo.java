@@ -2,6 +2,8 @@ package jadx.core.dex.info;
 
 import java.util.Objects;
 
+import me.yricky.oh.abcd.isa.Asm;
+
 import jadx.api.plugins.input.data.IFieldRef;
 import jadx.core.codegen.TypeGen;
 import jadx.core.dex.instructions.args.ArgType;
@@ -30,6 +32,12 @@ public final class FieldInfo implements IFieldInfoRef {
 	public static FieldInfo fromRef(RootNode root, IFieldRef fieldRef) {
 		ClassInfo declClass = ClassInfo.fromName(root, fieldRef.getParentClassType());
 		FieldInfo field = new FieldInfo(declClass, fieldRef.getName(), ArgType.parse(fieldRef.getType()));
+		return root.getInfoStorage().getField(field);
+	}
+
+	public static FieldInfo fromAsm(RootNode root, Asm.AsmItem asmItem, String filedName) {
+		ClassInfo declClass = ClassInfo.fromName(root, "Object");
+		FieldInfo field = new FieldInfo(declClass, filedName, ArgType.parse("Object"));
 		return root.getInfoStorage().getField(field);
 	}
 

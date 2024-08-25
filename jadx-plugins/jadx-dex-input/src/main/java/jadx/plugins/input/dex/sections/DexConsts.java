@@ -4,9 +4,10 @@ public class DexConsts {
 
 	public static final byte[] DEX_FILE_MAGIC = { 0x64, 0x65, 0x78, 0x0a }; // 'dex\n'
 
+	public static final byte[] ABC_FILE_MAGIC = { 0x50, 0x41, 0x4e, 0x44, 0x41 };
 	public static final byte[] ZIP_FILE_MAGIC = { 0x50, 0x4B, 0x03, 0x04 };
 
-	public static final int MAX_MAGIC_SIZE = 4;
+	public static final int MAX_MAGIC_SIZE = 5;
 
 	public static final int ENDIAN_CONSTANT = 0x12345678;
 

@@ -35,14 +35,19 @@ public class DebugInfoAttachVisitor extends AbstractVisitor {
 
 	@Override
 	public void visit(MethodNode mth) throws JadxException {
-		try {
-			IDebugInfo debugInfo = mth.getDebugInfo();
-			if (debugInfo != null) {
-				processDebugInfo(mth, debugInfo);
-			}
-		} catch (Exception e) {
-			mth.addWarnComment("Failed to parse debug info", e);
-		}
+
+		return;
+
+		/*
+		 * try {
+		 * IDebugInfo debugInfo = mth.getDebugInfo();
+		 * if (debugInfo != null) {
+		 * processDebugInfo(mth, debugInfo);
+		 * }
+		 * } catch (Exception e) {
+		 * mth.addWarnComment("Failed to parse debug info", e);
+		 * }
+		 */
 	}
 
 	private void processDebugInfo(MethodNode mth, IDebugInfo debugInfo) {

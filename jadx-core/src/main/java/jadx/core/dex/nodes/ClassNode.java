@@ -118,6 +118,7 @@ public class ClassNode extends NotificationAttrNode
 
 	private void load(IClassData cls, boolean reloading) {
 		try {
+
 			addAttrs(cls.getAttributes());
 			this.accessFlags = new AccessInfo(getAccessFlags(cls), AFType.CLASS);
 			this.superClass = checkSuperType(cls);

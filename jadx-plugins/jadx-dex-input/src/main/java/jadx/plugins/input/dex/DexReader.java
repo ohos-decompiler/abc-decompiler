@@ -3,17 +3,29 @@ package jadx.plugins.input.dex;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+import me.yricky.oh.abcd.AbcBuf;
+import me.yricky.oh.abcd.cfm.AbcClass;
+
 import jadx.api.plugins.input.data.IClassData;
 import jadx.plugins.input.dex.sections.DexClassData;
 import jadx.plugins.input.dex.sections.DexHeader;
 import jadx.plugins.input.dex.sections.SectionReader;
-import jadx.plugins.input.dex.sections.annotations.AnnotationsParser;
 
 public class DexReader {
 	private final int uniqId;
 	private final String inputFileName;
 	private final ByteBuffer buf;
 	private final DexHeader header;
+
+	public AbcBuf getAbc() {
+		return abc;
+	}
+
+	public void setAbc(AbcBuf abc) {
+		this.abc = abc;
+	}
+
+	public AbcBuf abc;
 
 	public DexReader(int uniqId, String inputFileName, byte[] content) {
 		this.uniqId = uniqId;
@@ -23,18 +35,19 @@ public class DexReader {
 	}
 
 	public void visitClasses(Consumer<IClassData> consumer) {
-		int count = header.getClassDefsSize();
-		if (count == 0) {
+		if (abc == null) {
 			return;
 		}
-		int classDefsOff = header.getClassDefsOff();
-		SectionReader in = new SectionReader(this, classDefsOff);
-		AnnotationsParser annotationsParser = new AnnotationsParser(in.copy(), in.copy());
-		DexClassData classData = new DexClassData(in, annotationsParser);
-		for (int i = 0; i < count; i++) {
-			consumer.accept(classData);
-			in.shiftOffset(DexClassData.SIZE);
-		}
+		abc.getClasses().forEach((key, value) -> {
+			AbcClass abcClass = value instanceof AbcClass ? (AbcClass) value : null;
+
+			if (abcClass != null) {
+				DexClassData classData = new DexClassData(new SectionReader(this, 0), null);
+				classData.abcClass = abcClass;
+				consumer.accept(classData);
+			}
+
+		});
 	}
 
 	public ByteBuffer getBuf() {

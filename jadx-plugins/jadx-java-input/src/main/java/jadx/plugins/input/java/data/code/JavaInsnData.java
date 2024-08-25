@@ -2,6 +2,8 @@ package jadx.plugins.input.java.data.code;
 
 import org.jetbrains.annotations.Nullable;
 
+import me.yricky.oh.abcd.isa.Asm;
+
 import jadx.api.plugins.input.data.ICallSite;
 import jadx.api.plugins.input.data.IFieldRef;
 import jadx.api.plugins.input.data.IMethodHandle;
@@ -78,6 +80,11 @@ public class JavaInsnData implements InsnData {
 	@Override
 	public String getOpcodeMnemonic() {
 		return insnInfo.getName();
+	}
+
+	@Override
+	public Asm.AsmItem getAsmItem() {
+		return null;
 	}
 
 	@Override

@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import me.yricky.oh.abcd.cfm.AbcMethod;
+
 import jadx.api.ICodeInfo;
 import jadx.api.JavaMethod;
 import jadx.api.metadata.ICodeNodeRef;
@@ -53,6 +55,7 @@ public class MethodNode extends NotificationAttrNode implements IMethodDetails, 
 
 	private final ICodeReader codeReader;
 	private final int insnsCount;
+	public AbcMethod abcMethod;
 
 	private boolean noCode;
 	private int regsCount;
@@ -93,6 +96,7 @@ public class MethodNode extends NotificationAttrNode implements IMethodDetails, 
 		this.parentClass = classNode;
 		this.accFlags = new AccessInfo(mthData.getAccessFlags(), AFType.METHOD);
 		ICodeReader codeReader = mthData.getCodeReader();
+
 		this.noCode = codeReader == null;
 		if (noCode) {
 			this.codeReader = null;
@@ -182,24 +186,32 @@ public class MethodNode extends NotificationAttrNode implements IMethodDetails, 
 		if (accFlags.isStatic()) {
 			thisArg = null;
 		} else {
-			ArgType thisClsType = typeUtils.expandTypeVariables(this, parentClass.getType());
-			RegisterArg arg = InsnArg.reg(pos++, thisClsType);
-			arg.add(AFlag.THIS);
-			arg.add(AFlag.IMMUTABLE_TYPE);
-			thisArg = arg;
 		}
 		if (args.isEmpty()) {
 			argsList = Collections.emptyList();
 			return;
 		}
 		argsList = new ArrayList<>(args.size());
+		int idx = 0;
 		for (ArgType argType : args) {
-			ArgType expandedType = typeUtils.expandTypeVariables(this, argType);
-			RegisterArg regArg = InsnArg.reg(pos, expandedType);
-			regArg.add(AFlag.METHOD_ARGUMENT);
-			regArg.add(AFlag.IMMUTABLE_TYPE);
-			argsList.add(regArg);
-			pos += argType.getRegCount();
+
+			if (idx == 2) {
+				ArgType thisClsType = typeUtils.expandTypeVariables(this, parentClass.getType());
+				RegisterArg arg = InsnArg.reg(pos, thisClsType);
+				arg.add(AFlag.THIS);
+				arg.add(AFlag.IMMUTABLE_TYPE);
+				thisArg = arg;
+				argsList.add(arg);
+			} else {
+				ArgType expandedType = typeUtils.expandTypeVariables(this, argType);
+				RegisterArg regArg = InsnArg.reg(pos, expandedType);
+				regArg.add(AFlag.METHOD_ARGUMENT);
+				regArg.add(AFlag.IMMUTABLE_TYPE);
+				argsList.add(regArg);
+			}
+
+			pos += 1;
+			idx = idx + 1;
 		}
 	}
 
