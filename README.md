@@ -37,5 +37,5 @@ jadx 自带的 Pass: [jadx-core/src/main/java/jadx/core/dex/visitors](./jadx-cor
 
 ## #4 编译
 
-需要编译 patch 过的 abcde 库（增加导出了一个接口）
+需要编译 patch 过的 [abcde](https://github.com/ohos-decompiler/abcde) 库（增加导出了一个接口）
 
