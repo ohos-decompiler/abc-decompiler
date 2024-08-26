@@ -181,11 +181,12 @@ public class DexClassData implements IClassData {
 		methodData.setMethodRef(new DexMethodRef());
 
 		List<AbcMethod> mths = abcClass.getMethods();
+
 		int idx = 0;
 		for (AbcMethod mth : mths) {
 			DexMethodRef methodRef = methodData.getMethodRef();
 			methodRef.reset();
-			methodRef.initUniqId(in.getDexReader(), idx);
+			methodRef.initUniqId(in.getDexReader(), mth.getOffset());
 			idx += 1;
 
 			methodRef.setDexIdx(in.getDexReader().getUniqId());
