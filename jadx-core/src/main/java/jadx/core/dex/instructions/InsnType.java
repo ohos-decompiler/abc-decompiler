@@ -22,6 +22,8 @@ public enum InsnType {
 
 	CMP_L,
 	CMP_G,
+	CMP_EQ,
+
 	IF,
 	SWITCH,
 	SWITCH_DATA,

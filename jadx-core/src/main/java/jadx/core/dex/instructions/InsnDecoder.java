@@ -133,13 +133,13 @@ public class InsnDecoder {
 						InsnArg.reg(asmItem.getOpUnits().get(1).intValue(), ArgType.NARROW));
 
 			case 0x13:
-				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_G, ArgType.INT);
+				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_G, ArgType.NARROW);
 
 			case 0x11:
-				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_L, ArgType.INT);
+				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_L, ArgType.NARROW);
 
 			case 0x28: // stricteq
-				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_L, ArgType.OBJECT);
+				return cmp(accIndex, asmItem.getOpUnits().get(2).intValue(), accIndex, InsnType.CMP_EQ, ArgType.OBJECT);
 
 			// isfalse
 			case 0x23:
@@ -148,7 +148,7 @@ public class InsnDecoder {
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, nOp == 0x24 ? "isfalse" : "istrue");
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
 				invoke.addReg(accIndex, ArgType.OBJECT);
-				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.BOOLEAN));
 				return invoke;
 			}
 
@@ -352,7 +352,7 @@ public class InsnDecoder {
 			}
 		}
 
-		if (nOp == 0xfe || nOp == -2) {
+		if (nOp == 0xfe) {
 			nOp = asmItem.getOpUnits().get(1).intValue();
 			switch (nOp) {
 				case 0x09: {
