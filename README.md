@@ -19,7 +19,7 @@ abc-decompiler 基于 [jadx](https://github.com/skylot/jadx/) 和 [abcde](https:
 
 目前的进展：
 - 修改输入部分代码，可以拖入 abc 文件分析
-- 实现了小部分字节码，if语句、方法调用、对象成员访问基本能看.
+- 实现了部分字节码，if语句、方法调用、对象成员访问基本能看，目前实现指令 78 条，字节码总数：[282 条](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/arkts-bytecode-fundamentals-V5#%E6%9C%AF%E8%AF%AD%E5%92%8C%E7%BA%A6%E6%9D%9F).
 
 计划：
 - 先补齐字节码，让代码能看.
