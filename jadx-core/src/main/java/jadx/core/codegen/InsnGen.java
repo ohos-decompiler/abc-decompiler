@@ -31,6 +31,7 @@ import jadx.core.dex.instructions.ArithNode;
 import jadx.core.dex.instructions.ArithOp;
 import jadx.core.dex.instructions.BaseInvokeNode;
 import jadx.core.dex.instructions.ConstClassNode;
+import jadx.core.dex.instructions.ConstIntNode;
 import jadx.core.dex.instructions.ConstStringNode;
 import jadx.core.dex.instructions.FillArrayInsn;
 import jadx.core.dex.instructions.FilledNewArrayNode;
@@ -318,6 +319,10 @@ public class InsnGen {
 				code.add(mth.root().getStringUtils().unescapeString(str));
 				break;
 
+			case CONST_INT:
+				code.add(String.format("%d", ((ConstIntNode) insn).getNumber()));
+				break;
+
 			case CONST_CLASS:
 				ArgType clsType = ((ConstClassNode) insn).getClsType();
 				useType(code, clsType);
@@ -409,6 +414,22 @@ public class InsnGen {
 				code.add('(');
 				addArg(code, insn.getArg(0));
 				code.add(" != ");
+				addArg(code, insn.getArg(1));
+				code.add(" ? 1 : 0)");
+				break;
+
+			case CMP_GE:
+				code.add('(');
+				addArg(code, insn.getArg(0));
+				code.add(" >= ");
+				addArg(code, insn.getArg(1));
+				code.add(" ? 1 : 0)");
+				break;
+
+			case CMP_LE:
+				code.add('(');
+				addArg(code, insn.getArg(0));
+				code.add(" <= ");
 				addArg(code, insn.getArg(1));
 				code.add(" ? 1 : 0)");
 				break;

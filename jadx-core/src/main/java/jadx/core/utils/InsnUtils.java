@@ -13,6 +13,7 @@ import jadx.api.plugins.input.data.attributes.JadxAttrType;
 import jadx.core.dex.attributes.AFlag;
 import jadx.core.dex.info.FieldInfo;
 import jadx.core.dex.instructions.ConstClassNode;
+import jadx.core.dex.instructions.ConstIntNode;
 import jadx.core.dex.instructions.ConstStringNode;
 import jadx.core.dex.instructions.IndexInsnNode;
 import jadx.core.dex.instructions.InsnType;
@@ -91,6 +92,8 @@ public class InsnUtils {
 		switch (insn.getType()) {
 			case CONST:
 				return insn.getArg(0);
+			case CONST_INT:
+				return ((ConstIntNode) insn).getNumber();
 			case CONST_STR:
 				return ((ConstStringNode) insn).getString();
 			case CONST_CLASS:

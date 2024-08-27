@@ -4,6 +4,7 @@ public enum InsnType {
 
 	CONST,
 	CONST_STR,
+	CONST_INT,
 	CONST_CLASS,
 
 	ARITH,
@@ -21,7 +22,9 @@ public enum InsnType {
 	MOVE_EXCEPTION,
 
 	CMP_L,
+	CMP_LE,
 	CMP_G,
+	CMP_GE,
 	CMP_EQ,
 	CMP_NE,
 

@@ -190,6 +190,12 @@ public abstract class InsnArg extends Typed {
 			case MOVE:
 				throw new JadxRuntimeException("Don't wrap MOVE or CONST insns: " + insn);
 
+			case CONST_INT:
+				arg.setType(ArgType.INT);
+				if (resArg != null) {
+					resArg.setType(ArgType.INT);
+				}
+				break;
 			case CONST_STR:
 				arg.setType(ArgType.STRING);
 				if (resArg != null) {

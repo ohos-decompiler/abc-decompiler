@@ -40,10 +40,13 @@ public class FallbackModeVisitor extends AbstractVisitor {
 					case NEG:
 					case CONST:
 					case CONST_STR:
+					case CONST_INT:
 					case CONST_CLASS:
 					case CMP_L:
 					case CMP_EQ:
 					case CMP_NE:
+					case CMP_LE:
+					case CMP_GE:
 					case CMP_G:
 						insn.remove(AType.EXC_CATCH);
 						break;

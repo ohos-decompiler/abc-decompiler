@@ -2,6 +2,7 @@ package jadx.core.dex.instructions.args;
 
 import org.jetbrains.annotations.NotNull;
 
+import jadx.core.dex.instructions.ConstIntNode;
 import jadx.core.dex.instructions.ConstStringNode;
 import jadx.core.dex.instructions.InsnType;
 import jadx.core.dex.nodes.InsnNode;
@@ -76,6 +77,8 @@ public final class InsnWrapArg extends InsnArg {
 	public String toShortString() {
 		if (wrappedInsn.getType() == InsnType.CONST_STR) {
 			return "(\"" + ((ConstStringNode) wrappedInsn).getString() + "\")";
+		} else if (wrappedInsn.getType() == InsnType.CONST_INT) {
+			return String.format("( %d )", ((ConstIntNode) wrappedInsn).getNumber());
 		}
 		return "(wrap:" + type + ":" + wrappedInsn.getType() + ')';
 	}
@@ -84,6 +87,8 @@ public final class InsnWrapArg extends InsnArg {
 	public String toString() {
 		if (wrappedInsn.getType() == InsnType.CONST_STR) {
 			return "(\"" + ((ConstStringNode) wrappedInsn).getString() + "\")";
+		} else if (wrappedInsn.getType() == InsnType.CONST_INT) {
+			return String.format("( %d )", ((ConstIntNode) wrappedInsn).getNumber());
 		}
 		return "(wrap:" + type + ":" + wrappedInsn + ')';
 	}

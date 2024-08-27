@@ -208,6 +208,7 @@ public class InsnNode extends LineAttrNode {
 	public boolean isConstInsn() {
 		switch (getType()) {
 			case CONST:
+			case CONST_INT:
 			case CONST_STR:
 			case CONST_CLASS:
 				return true;
@@ -246,6 +247,7 @@ public class InsnNode extends LineAttrNode {
 
 		switch (getType()) {
 			case CONST:
+			case CONST_INT:
 			case CONST_STR:
 			case CONST_CLASS:
 			case CAST:
@@ -254,6 +256,8 @@ public class InsnNode extends LineAttrNode {
 			case NEG:
 			case CMP_L:
 			case CMP_G:
+			case CMP_LE:
+			case CMP_GE:
 			case CMP_EQ:
 			case CMP_NE:
 			case CHECK_CAST:
@@ -509,12 +513,15 @@ public class InsnNode extends LineAttrNode {
 			case MOVE_EXCEPTION:
 			case NEG:
 			case CONST:
+			case CONST_INT:
 			case CONST_STR:
 			case CONST_CLASS:
 			case CMP_L:
 			case CMP_G:
 			case CMP_EQ:
 			case CMP_NE:
+			case CMP_LE:
+			case CMP_GE:
 			case NOP:
 				return false;
 
