@@ -181,6 +181,17 @@ public class InsnDecoder {
 			case 0x21:
 				return inc(insn);
 
+			case 0x0a:
+				return arith2(insn, ArithOp.ADD);
+			case 0x0b:
+				return arith2(insn, ArithOp.SUB);
+			case 0x0c:
+				return arith2(insn, ArithOp.MUL);
+			case 0x0d:
+				return arith2(insn, ArithOp.DIV);
+			case 0x0e:
+				return arith2(insn, ArithOp.REM);
+
 			// isfalse
 			case 0x23:
 			case 0x24: {
@@ -233,21 +244,10 @@ public class InsnDecoder {
 			case 0x51: // jnez
 				return new IfNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset(), accIndex, IfOp.NE);
 
-			case 0xa:
-				return new ArithNode(ArithOp.ADD, InsnArg.reg(accIndex, ArgType.INT),
-						InsnArg.reg(asmItem.getOpUnits().get(2).intValue(), ArgType.INT), InsnArg.reg(accIndex, ArgType.INT));
-
-			case 0xc:
-				return new ArithNode(ArithOp.MUL, InsnArg.reg(accIndex, ArgType.INT),
-						InsnArg.reg(asmItem.getOpUnits().get(2).intValue(), ArgType.INT), InsnArg.reg(accIndex, ArgType.INT));
 			case 0x4d:
 				return new GotoNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset());
 			case 0x4e:
 				return new GotoNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset());
-
-			case 0xb:
-				return new ArithNode(ArithOp.SUB, InsnArg.reg(accIndex, ArgType.INT),
-						InsnArg.reg(asmItem.getOpUnits().get(2).intValue(), ArgType.INT), InsnArg.reg(accIndex, ArgType.INT));
 
 			case 0x64:
 			case 0x65:
@@ -399,6 +399,7 @@ public class InsnDecoder {
 			}
 
 			// definefunc
+			case 0x74:
 			case 0x33: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				List<InstFmt> formats = asmItem1.getIns().getFormat();
@@ -518,6 +519,8 @@ public class InsnDecoder {
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
 				return invoke;
 			}
+
+			case 0x85:
 			case 0x37: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "ldobjbyvalue");
@@ -529,6 +532,7 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0x86:
 			case 0x38: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 3, "stobjbyvalue");
@@ -624,8 +628,13 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0x69: {
+				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 0, "poplexenv");
+				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 0);
+				return invoke;
+			}
+
 			case 0x1e: {
-				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "tonumeric");
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
 				invoke.addArg(InsnArg.reg(accIndex, ArgType.NARROW));
@@ -633,6 +642,40 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0xbf: {
+				Asm.AsmItem asmItem1 = insn.getAsmItem();
+				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "resumegenerator");
+				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+				invoke.addArg(InsnArg.reg(accIndex, ArgType.NARROW));
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
+				return invoke;
+			}
+			case 0xc0: {
+				Asm.AsmItem asmItem1 = insn.getAsmItem();
+				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "getresumemode");
+				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+				invoke.addArg(InsnArg.reg(accIndex, ArgType.NARROW));
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
+				return invoke;
+			}
+
+			case 0xc3: {
+				Asm.AsmItem asmItem1 = insn.getAsmItem();
+				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "suspendgenerator");
+				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+				invoke.addArg(InsnArg.reg(asmItem1.getOpUnits().get(1).intValue(), ArgType.NARROW));
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
+				return invoke;
+			}
+
+			case 0xc4: {
+				Asm.AsmItem asmItem1 = insn.getAsmItem();
+				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "asyncfunctionawaituncaught");
+				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+				invoke.addArg(InsnArg.reg(asmItem1.getOpUnits().get(1).intValue(), ArgType.NARROW));
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
+				return invoke;
+			}
 			case 0x7d: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "ldlocalmodulevar");
@@ -658,6 +701,13 @@ public class InsnDecoder {
 					MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "throw$ifsupernotcorrectcall");
 					InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
 					invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem1.getOpUnits().get(2).intValue())));
+					return invoke;
+				}
+				case 0: {
+					Asm.AsmItem asmItem1 = insn.getAsmItem();
+					MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "throw");
+					InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+					invoke.addArg(InsnArg.reg(accIndex, ArgType.NARROW));
 					return invoke;
 				}
 			}
@@ -1022,6 +1072,16 @@ public class InsnDecoder {
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		return new ArithNode(ArithOp.ADD, InsnArg.reg(accReg, ArgType.NARROW_NUMBERS), InsnArg.reg(accReg, ArgType.NARROW_NUMBERS),
 				InsnArg.wrapArg(new ConstIntNode(1)));
+	}
+
+	private InsnNode arith2(InsnData insn, ArithOp op) {
+		Asm.AsmItem asmItem = insn.getAsmItem();
+		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
+		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
+		int a = asmItem.getOpUnits().get(2).intValue();
+
+		return new ArithNode(op, InsnArg.reg(accReg, ArgType.NARROW_NUMBERS), InsnArg.reg(a, ArgType.NARROW_NUMBERS),
+				InsnArg.reg(accReg, ArgType.NARROW_NUMBERS));
 	}
 
 	private InsnNode arithLit(InsnData insn, ArithOp op, ArgType type) {
