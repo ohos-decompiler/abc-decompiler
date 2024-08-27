@@ -321,7 +321,7 @@ public class InsnGen {
 			case CONST_CLASS:
 				ArgType clsType = ((ConstClassNode) insn).getClsType();
 				useType(code, clsType);
-				code.add(".class");
+				// code.add(".class");
 				break;
 
 			case CONST:
@@ -873,12 +873,12 @@ public class InsnGen {
 				break;
 
 			case STATIC:
-				ClassInfo insnCls = mth.getParentClass().getClassInfo();
-				ClassInfo declClass = callMth.getDeclClass();
-				if (!insnCls.equals(declClass)) {
-					useClass(code, declClass);
-					code.add('.');
-				}
+				// ClassInfo insnCls = mth.getParentClass().getClassInfo();
+				// ClassInfo declClass = callMth.getDeclClass();
+				// if (!insnCls.equals(declClass)) {
+				// useClass(code, declClass);
+				// code.add('.');
+				// }
 				break;
 		}
 		if (callMthNode != null) {
