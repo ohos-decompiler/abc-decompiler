@@ -255,6 +255,7 @@ public class InsnNode extends LineAttrNode {
 			case CMP_L:
 			case CMP_G:
 			case CMP_EQ:
+			case CMP_NE:
 			case CHECK_CAST:
 			case INSTANCE_OF:
 			case FILL_ARRAY:
@@ -513,6 +514,7 @@ public class InsnNode extends LineAttrNode {
 			case CMP_L:
 			case CMP_G:
 			case CMP_EQ:
+			case CMP_NE:
 			case NOP:
 				return false;
 

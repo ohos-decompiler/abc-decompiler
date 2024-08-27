@@ -405,6 +405,14 @@ public class InsnGen {
 				code.add(" ? 1 : 0)");
 				break;
 
+			case CMP_NE:
+				code.add('(');
+				addArg(code, insn.getArg(0));
+				code.add(" != ");
+				addArg(code, insn.getArg(1));
+				code.add(" ? 1 : 0)");
+				break;
+
 			case INSTANCE_OF: {
 				boolean wrap = state.contains(Flags.BODY_ONLY);
 				if (wrap) {
