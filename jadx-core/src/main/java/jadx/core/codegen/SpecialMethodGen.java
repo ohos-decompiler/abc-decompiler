@@ -7,6 +7,7 @@ import jadx.api.ICodeWriter;
 import jadx.core.dex.info.MethodInfo;
 import jadx.core.dex.instructions.InvokeNode;
 import jadx.core.dex.instructions.args.InsnArg;
+import jadx.core.dex.instructions.args.LiteralArg;
 import jadx.core.dex.nodes.MethodNode;
 import jadx.core.utils.exceptions.CodegenException;
 
@@ -77,11 +78,76 @@ class StModuleVarHandler implements SpecialMethodHandler {
 	}
 }
 
+// ldlexvar
+class LdLexVarHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		code.add("__lexenv__[");
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("][");
+		gen.addArg(code, insn.getArg(1), false);
+		code.add("]");
+	}
+}
+
+// stlexvar
+class StLexVarHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		code.add("__lexenv__[");
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("][");
+		gen.addArg(code, insn.getArg(1), false);
+		code.add("]");
+		code.add(" = ");
+		gen.addArg(code, insn.getArg(2), false);
+	}
+}
+
 // ldexternalmodulevar
 class LdexternalModuleVarHandler implements SpecialMethodHandler {
 	@Override
 	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
 		gen.addArg(code, insn.getArg(0), false);
+	}
+}
+
+// definegettersetterbyvalue
+class DefineGetterSetterByValueHandler implements SpecialMethodHandler {
+
+	public boolean isNull(InsnArg arg) {
+		if (arg.isLiteral()) {
+			LiteralArg la = (LiteralArg) arg;
+			return la.getLiteral() == 0;
+		}
+		return false;
+	}
+
+	public boolean generateProp(InsnGen gen, ICodeWriter code, String typ, InsnArg obj, InsnArg field, InsnArg value, boolean isNewLine)
+			throws CodegenException {
+		if (isNull(value)) {
+			return false;
+		}
+
+		if (isNewLine) {
+			code.add(";");
+			code.startLine();
+		}
+		gen.addArg(code, obj, false);
+		code.add("[");
+		gen.addArg(code, field, false);
+		code.add("].");
+		code.add(typ);
+		code.add(" = ");
+		gen.addArg(code, value, false);
+		return true;
+	}
+
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		boolean isNewLine = false;
+		isNewLine = generateProp(gen, code, "getter", insn.getArg(0), insn.getArg(1), insn.getArg(2), isNewLine);
+		generateProp(gen, code, "setter", insn.getArg(0), insn.getArg(1), insn.getArg(3), isNewLine);
 	}
 }
 
@@ -96,6 +162,9 @@ public class SpecialMethodGen {
 		handlers.put("stownbyindex", new StownByIndexHandler());
 		handlers.put("stmodulevar", new StModuleVarHandler());
 		handlers.put("ldexternalmodulevar", new LdexternalModuleVarHandler());
+		handlers.put("definegettersetterbyvalue", new DefineGetterSetterByValueHandler());
+		handlers.put("ldlexvar", new LdLexVarHandler());
+		handlers.put("stlexvar", new StLexVarHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {

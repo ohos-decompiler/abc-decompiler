@@ -24,7 +24,7 @@ public class DexMethodRef implements IMethodRef {
 	public AbcMethod abcMethod;
 
 	public void initUniqId(DexReader dexReader, int idx) {
-		this.uniqId = (dexReader.getUniqId() & 0xFFFF) << 16 | (idx & 0xFFFF);
+		this.uniqId = idx;
 	}
 
 	public AbcMethod getAbcMethod() {

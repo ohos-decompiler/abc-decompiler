@@ -290,6 +290,10 @@ public class InsnGen {
 	}
 
 	protected void useType(ICodeWriter code, ArgType type) {
+		if (type == null) {
+			code.add("??");
+			return;
+		}
 		mgen.getClassGen().useType(code, type);
 	}
 
