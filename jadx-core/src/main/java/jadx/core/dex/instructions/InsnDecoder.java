@@ -198,8 +198,8 @@ public class InsnDecoder {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, nOp == 0x24 ? "isfalse" : "istrue");
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-				invoke.addReg(accIndex, ArgType.BOOLEAN);
-				invoke.setResult(InsnArg.reg(accIndex, ArgType.BOOLEAN));
+				invoke.addReg(accIndex, ArgType.INT);
+				invoke.setResult(InsnArg.reg(accIndex, ArgType.INT));
 				return invoke;
 			}
 
@@ -324,7 +324,7 @@ public class InsnDecoder {
 				invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
 				invoke.addReg(parentReg, ArgType.OBJECT);
 
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString())));
+				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
 				return invoke;
 			}
@@ -337,7 +337,7 @@ public class InsnDecoder {
 
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "createarraywithbuffer");
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString())));
+				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
 				return invoke;
 			}
@@ -353,7 +353,7 @@ public class InsnDecoder {
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "createobjectwithbuffer");
 
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString())));
+				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
 				return invoke;
 			}
@@ -366,7 +366,7 @@ public class InsnDecoder {
 
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "newlexenvwithname");
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString())));
+				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
 				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem1.getOpUnits().get(1).intValue())));
 
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
@@ -432,7 +432,7 @@ public class InsnDecoder {
 				AbcClass abcClass = getAbcClassByInsn(insn);
 				ModuleLiteralArray.RegularImport imp =
 						abcClass.getModuleInfo().getRegularImports().get(asmItem1.getOpUnits().get(1).intValue());
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(imp.toString())));
+				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(imp.toString(), false)));
 				invoke.setResult(InsnArg.reg(accIndex, ArgType.OBJECT));
 				return invoke;
 			}
@@ -497,6 +497,8 @@ public class InsnDecoder {
 
 			case 0x1f:
 				return neg(insn);
+			case 0x20:
+				return not(insn);
 			case 0x32:
 				return supercallthisrange(insn);
 
@@ -947,7 +949,7 @@ public class InsnDecoder {
 		int baseArg = classArg + 1;
 		int argc = opUnits.get(2).intValue() - 1;
 
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, argc, "newobjrange");
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, argc + 1, "newobjrange");
 		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, argc + 1);
 		invoke.addReg(classArg, ArgType.CLASS);
 		for (int i = 0; i < argc; i++) {
@@ -1019,19 +1021,21 @@ public class InsnDecoder {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		List<Number> opUnits = asmItem.getOpUnits();
-		int argReg = opUnits.get(1).intValue();
 
 		InsnNode inode = new InsnNode(InsnType.NEG, 1);
-		inode.setResult(InsnArg.reg(argReg, ArgType.INT));
 		inode.addArg(InsnArg.reg(accReg, ArgType.INT));
+		inode.setResult(InsnArg.reg(accReg, ArgType.INT));
 		return inode;
 	}
 
-	private InsnNode not(InsnData insn, ArgType type) {
+	private InsnNode not(InsnData insn) {
+		Asm.AsmItem asmItem = insn.getAsmItem();
+		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
+		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
+
 		InsnNode inode = new InsnNode(InsnType.NOT, 1);
-		inode.setResult(InsnArg.reg(insn, 0, type));
-		inode.addArg(InsnArg.reg(insn, 1, type));
+		inode.addArg(InsnArg.reg(accReg, ArgType.INT));
+		inode.setResult(InsnArg.reg(accReg, ArgType.INT));
 		return inode;
 	}
 

@@ -337,11 +337,18 @@ public class InsnGen {
 
 	private void makeInsnBody(ICodeWriter code, InsnNode insn, Set<Flags> state) throws CodegenException {
 		switch (insn.getType()) {
-			case CONST_STR:
-				String str = ((ConstStringNode) insn).getString();
-				code.add(mth.root().getStringUtils().unescapeString(str));
+			case CONST_STR: {
+				ConstStringNode csn = (ConstStringNode) insn;
+				String str = csn.getString();
+
+				if (csn.isNeedUnescape()) {
+					code.add(mth.root().getStringUtils().unescapeString(str));
+				} else {
+					code.add(str);
+				}
 				break;
 
+			}
 			case CONST_INT:
 				code.add(String.format("%d", ((ConstIntNode) insn).getNumber()));
 				break;
@@ -363,17 +370,17 @@ public class InsnGen {
 
 			case CHECK_CAST:
 			case CAST: {
-				boolean wrap = state.contains(Flags.BODY_ONLY);
-				if (wrap) {
-					code.add('(');
-				}
-				code.add('(');
-				useType(code, (ArgType) ((IndexInsnNode) insn).getIndex());
-				code.add(") ");
+				// boolean wrap = state.contains(Flags.BODY_ONLY);
+				// if (wrap) {
+				// code.add('(');
+				// }
+				// code.add('(');
+				// useType(code, (ArgType) ((IndexInsnNode) insn).getIndex());
+				// code.add(") ");
 				addArg(code, insn.getArg(0), true);
-				if (wrap) {
-					code.add(')');
-				}
+				// if (wrap) {
+				// code.add(')');
+				// }
 				break;
 			}
 

@@ -7,9 +7,21 @@ public final class ConstStringNode extends InsnNode {
 
 	private final String str;
 
+	public boolean isNeedUnescape() {
+		return needUnescape;
+	}
+
+	private boolean needUnescape = true;
+
 	public ConstStringNode(String str) {
 		super(InsnType.CONST_STR, 0);
 		this.str = str;
+	}
+
+	public ConstStringNode(String str, boolean needUnescape) {
+		super(InsnType.CONST_STR, 0);
+		this.str = str;
+		this.needUnescape = needUnescape;
 	}
 
 	public String getString() {
