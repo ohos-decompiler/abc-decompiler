@@ -281,22 +281,19 @@ public class InsnDecoder {
 				return iputInsn;
 
 			case 0x2e: // callthis1
-				int obj = asmItem.getOpUnits().get(2).intValue();
-				int arg = asmItem.getOpUnits().get(3).intValue();
-				RegisterArg mthObj = InsnArg.reg(accIndex, ArgType.OBJECT);
-				return invoke(insn, InvokeType.DIRECT, accIndex, obj, arg, searchMethod(insn));
+				return callthisN(insn, 1);
 
 			case 0x2d:
-				return callthis(insn);
+				return callthisN(insn, 0);
 
 			case 0x2f: // callthis2
-				return callthis2(insn);
+				return callthisN(insn, 2);
 
 			case 0x31:
 				return callThisRange(insn);
 
 			case 0x30: // callthis3
-				return callthis3(insn);
+				return callthisN(insn, 3);
 
 			case 0x3f: {
 				ArgType clsType = ArgType.object(getAbcString(asmItem, 2));
@@ -489,14 +486,14 @@ public class InsnDecoder {
 			}
 
 			case 0x29:
-				return callargsN(insn, "callargs0", 0);
+				return callargsN(insn, 0);
 			case 0x2a:
-				return callargsN(insn, "callargs1", 1);
+				return callargsN(insn, 1);
 
 			case 0x2b:
-				return callargsN(insn, "callargs2", 2);
+				return callargsN(insn, 2);
 			case 0x2c:
-				return callargsN(insn, "callargs3", 3);
+				return callargsN(insn, 3);
 
 			case 0x1f:
 				return neg(insn);
@@ -717,7 +714,7 @@ public class InsnDecoder {
 
 	}
 
-	private @NotNull InvokeNode callargsN(InsnData insn, String name, int argc) {
+	private @NotNull InvokeNode callargsN(InsnData insn, int n) {
 		Asm.AsmItem asmItem1 = insn.getAsmItem();
 
 		Asm.AsmItem asmItem = insn.getAsmItem();
@@ -726,11 +723,12 @@ public class InsnDecoder {
 		int numArgs = mth.getCodeItem().getNumArgs();
 		int accReg = numArgs + numVRegs;
 
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1 + argc, name);
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1 + argc);
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2 + n, "callargsN");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2 + n);
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(n)));
 		invoke.addArg(InsnArg.reg(accReg, ArgType.OBJECT));
-		for (int i = 0; i < argc; i++) {
-			invoke.addArg(InsnArg.reg(asmItem1.getOpUnits().get(i + 2).intValue(), ArgType.OBJECT));
+		for (int i = 0; i < n; i++) {
+			invoke.addArg(InsnArg.reg(asmItem1.getOpUnits().get(i + 2).intValue(), ArgType.NARROW));
 		}
 		invoke.setResult(InsnArg.reg(accReg, ArgType.NARROW));
 		return invoke;
@@ -852,92 +850,23 @@ public class InsnDecoder {
 		return new InvokeNode(mthInfo, insn, type, false);
 	}
 
-	private InsnNode invoke(InsnData insn, InvokeType type, boolean isRange) {
-		IMethodRef mthRef = InsnDataUtils.getMethodRef(insn);
-		if (mthRef == null) {
-			throw new JadxRuntimeException("Failed to load method reference for insn: " + insn);
-		}
-		MethodInfo mthInfo = MethodInfo.fromRef(root, mthRef);
-		return new InvokeNode(mthInfo, insn, type, isRange);
-	}
-
-	private InsnNode invoke(InsnData insn, InvokeType type, int accReg, int thisReg, int argReg, String target) {
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 5, target);
-
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.VIRTUAL, 5);
-		invoke.addReg(thisReg, ArgType.OBJECT); // object
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object2"))));
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
-		invoke.addReg(thisReg, ArgType.OBJECT);
-		invoke.addReg(argReg, ArgType.OBJECT);
-
-		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
-		return invoke;
-	}
-
-	private InsnNode callthis3(InsnData insn) {
+	private InsnNode callthisN(InsnData insn, int n) {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		List<Number> opUnits = asmItem.getOpUnits();
 		int thisReg = opUnits.get(2).intValue();
 
-		String target = searchMethod(insn);
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 4 + 3, target);
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 3 + n, "callthisN");
 
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.VIRTUAL, 4 + 3);
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3 + n);
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(n)));
 		invoke.addReg(thisReg, ArgType.OBJECT); // object
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object2"))));
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
-		invoke.addReg(thisReg, ArgType.OBJECT);
-
-		for (int i = 0; i < 3; i++) {
-			invoke.addReg(opUnits.get(3 + i).intValue(), ArgType.OBJECT);
+		invoke.addReg(accReg, ArgType.NARROW); // object
+		for (int i = 0; i < n; i++) {
+			invoke.addReg(opUnits.get(3 + i).intValue(), ArgType.NARROW);
 		}
-		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
-		return invoke;
-	}
-
-	private InsnNode callthis2(InsnData insn) {
-		Asm.AsmItem asmItem = insn.getAsmItem();
-		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
-		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		List<Number> opUnits = asmItem.getOpUnits();
-		int thisReg = opUnits.get(2).intValue();
-
-		String target = searchMethod(insn);
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 4 + 2, target);
-
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.VIRTUAL, 4 + 2);
-		invoke.addReg(thisReg, ArgType.OBJECT); // object
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object2"))));
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
-		invoke.addReg(thisReg, ArgType.OBJECT);
-
-		for (int i = 0; i < 2; i++) {
-			invoke.addReg(opUnits.get(3 + i).intValue(), ArgType.OBJECT);
-		}
-		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
-		return invoke;
-	}
-
-	private InsnNode callthis(InsnData insn) {
-		Asm.AsmItem asmItem = insn.getAsmItem();
-		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
-		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		List<Number> opUnits = asmItem.getOpUnits();
-		int thisReg = opUnits.get(2).intValue();
-
-		String target = searchMethod(insn);
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 4, target);
-
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.VIRTUAL, 4);
-		invoke.addReg(thisReg, ArgType.OBJECT); // object
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object2"))));
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
-		invoke.addReg(thisReg, ArgType.OBJECT);
-
-		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
+		invoke.setResult(InsnArg.reg(accReg, ArgType.NARROW));
 		return invoke;
 	}
 
@@ -949,21 +878,19 @@ public class InsnDecoder {
 		int thisReg = opUnits.get(3).intValue();
 		int baseArg = thisReg + 1;
 		int argc = opUnits.get(2).intValue();
-		String target = searchMethod(insn);
 
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 4 + argc, target);
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 3 + argc, "callthisN");
 
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.VIRTUAL, 4 + argc);
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3 + argc);
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(argc)));
 		invoke.addReg(thisReg, ArgType.OBJECT); // object
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object2"))));
-		invoke.addArg(InsnArg.wrapArg(new ConstClassNode(ArgType.object("Object3"))));
-		invoke.addReg(thisReg, ArgType.OBJECT);
+		invoke.addReg(accReg, ArgType.OBJECT); // object
 
 		for (int i = 0; i < argc; i++) {
-			invoke.addReg(baseArg + i, ArgType.OBJECT);
+			invoke.addReg(baseArg + i, ArgType.NARROW);
 		}
 
-		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
+		invoke.setResult(InsnArg.reg(accReg, ArgType.NARROW));
 		return invoke;
 	}
 

@@ -75,6 +75,7 @@ public class InsnGen {
 	protected final MethodNode mth;
 	protected final RootNode root;
 	protected final boolean fallback;
+	protected final SpecialMethodGen specialMethodGen;
 
 	protected enum Flags {
 		BODY_ONLY,
@@ -87,6 +88,7 @@ public class InsnGen {
 		this.mth = mgen.getMethodNode();
 		this.root = mth.root();
 		this.fallback = fallback;
+		this.specialMethodGen = new SpecialMethodGen();
 	}
 
 	private boolean isFallback() {
@@ -107,6 +109,27 @@ public class InsnGen {
 
 	public void addArg(ICodeWriter code, InsnArg arg, boolean wrap) throws CodegenException {
 		addArg(code, arg, wrap ? BODY_ONLY_FLAG : BODY_ONLY_NOWRAP_FLAGS);
+	}
+
+	public void addStrArg(ICodeWriter code, InsnArg arg) throws CodegenException {
+		if (arg.isLiteral()) {
+			LiteralArg litArg = (LiteralArg) arg;
+			String literalStr = lit(litArg);
+			code.add(literalStr);
+			return;
+		}
+
+		if (arg.isInsnWrap()) {
+			InsnNode wrapInsn = ((InsnWrapArg) arg).getWrapInsn();
+			switch (wrapInsn.getType()) {
+				case CONST_STR:
+					String str = ((ConstStringNode) wrapInsn).getString();
+					code.add(str);
+					return;
+			}
+		}
+
+		throw new CodegenException("addStrArg Unknown arg type " + arg);
 	}
 
 	public void addArg(ICodeWriter code, InsnArg arg, Set<Flags> flags) throws CodegenException {
@@ -902,6 +925,11 @@ public class InsnGen {
 				// }
 				break;
 		}
+
+		if (specialMethodGen.processMethod(this, insn, code, callMthNode)) {
+			return;
+		}
+
 		if (callMthNode != null) {
 			code.attachAnnotation(callMthNode);
 		}
