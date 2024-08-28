@@ -78,15 +78,25 @@ class StModuleVarHandler implements SpecialMethodHandler {
 	}
 }
 
+// trystglobalbyname
+class TrystglobalbynameHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		gen.addArg(code, insn.getArg(0), false);
+		code.add(" = ");
+		gen.addArg(code, insn.getArg(1), false);
+	}
+}
+
 // ldlexvar
 class LdLexVarHandler implements SpecialMethodHandler {
 	@Override
 	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
-		code.add("__lexenv__[");
+		code.add("_lexenv_");
 		gen.addArg(code, insn.getArg(0), false);
-		code.add("][");
+		code.add("_");
 		gen.addArg(code, insn.getArg(1), false);
-		code.add("]");
+		code.add("_");
 	}
 }
 
@@ -94,11 +104,11 @@ class LdLexVarHandler implements SpecialMethodHandler {
 class StLexVarHandler implements SpecialMethodHandler {
 	@Override
 	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
-		code.add("__lexenv__[");
+		code.add("_lexenv_");
 		gen.addArg(code, insn.getArg(0), false);
-		code.add("][");
+		code.add("_");
 		gen.addArg(code, insn.getArg(1), false);
-		code.add("]");
+		code.add("_");
 		code.add(" = ");
 		gen.addArg(code, insn.getArg(2), false);
 	}
@@ -165,6 +175,7 @@ public class SpecialMethodGen {
 		handlers.put("definegettersetterbyvalue", new DefineGetterSetterByValueHandler());
 		handlers.put("ldlexvar", new LdLexVarHandler());
 		handlers.put("stlexvar", new StLexVarHandler());
+		handlers.put("trystglobalbyname", new TrystglobalbynameHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
