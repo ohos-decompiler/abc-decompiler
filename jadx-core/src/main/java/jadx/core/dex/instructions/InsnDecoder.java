@@ -989,7 +989,7 @@ public class InsnDecoder {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		return new ArithNode(ArithOp.SUB, InsnArg.reg(accReg, ArgType.NARROW_NUMBERS), InsnArg.reg(accReg, ArgType.NARROW_NUMBERS),
+		return new ArithNode(ArithOp.SUB, InsnArg.reg(accReg, ArgType.INT), InsnArg.reg(accReg, ArgType.INT),
 				InsnArg.wrapArg(new ConstIntNode(1)));
 	}
 
@@ -997,7 +997,7 @@ public class InsnDecoder {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		return new ArithNode(ArithOp.ADD, InsnArg.reg(accReg, ArgType.NARROW_NUMBERS), InsnArg.reg(accReg, ArgType.NARROW_NUMBERS),
+		return new ArithNode(ArithOp.ADD, InsnArg.reg(accReg, ArgType.INT), InsnArg.reg(accReg, ArgType.INT),
 				InsnArg.wrapArg(new ConstIntNode(1)));
 	}
 
@@ -1007,8 +1007,8 @@ public class InsnDecoder {
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		int a = asmItem.getOpUnits().get(2).intValue();
 
-		return new ArithNode(op, InsnArg.reg(accReg, ArgType.NARROW_NUMBERS), InsnArg.reg(a, ArgType.NARROW_NUMBERS),
-				InsnArg.reg(accReg, ArgType.NARROW_NUMBERS));
+		return new ArithNode(op, InsnArg.reg(accReg, ArgType.INT), InsnArg.reg(a, ArgType.INT),
+				InsnArg.reg(accReg, ArgType.INT));
 	}
 
 	private InsnNode arithLit(InsnData insn, ArithOp op, ArgType type) {
@@ -1023,8 +1023,8 @@ public class InsnDecoder {
 		int argReg = opUnits.get(1).intValue();
 
 		InsnNode inode = new InsnNode(InsnType.NEG, 1);
-		inode.setResult(InsnArg.reg(argReg, ArgType.NARROW_NUMBERS));
-		inode.addArg(InsnArg.reg(accReg, ArgType.NARROW_NUMBERS));
+		inode.setResult(InsnArg.reg(argReg, ArgType.INT));
+		inode.addArg(InsnArg.reg(accReg, ArgType.INT));
 		return inode;
 	}
 
