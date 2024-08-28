@@ -712,7 +712,7 @@ public class InsnDecoder {
 			}
 		}
 
-		return new InsnNode(InsnType.NOP, 0);
+		throw new DecodeException("Unknown instruction: '" + asmItem.getIns().getInstruction().toString() + '\'');
 
 	}
 
