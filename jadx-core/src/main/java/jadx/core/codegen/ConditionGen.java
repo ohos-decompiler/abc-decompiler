@@ -175,6 +175,7 @@ public class ConditionGen extends InsnGen {
 				case MUL:
 				case DIV:
 				case REM:
+				case EXP:
 					return false;
 
 				default:

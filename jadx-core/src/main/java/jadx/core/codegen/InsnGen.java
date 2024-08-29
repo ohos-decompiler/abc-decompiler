@@ -491,8 +491,8 @@ public class InsnGen {
 
 			case NEW_ARRAY: {
 				ArgType arrayType = ((NewArrayNode) insn).getArrayType();
-				code.add("new ");
-				useType(code, arrayType.getArrayRootElement());
+				// code.add("new ");
+				// useType(code, arrayType.getArrayRootElement());
 				int k = 0;
 				int argsCount = insn.getArgsCount();
 				for (; k < argsCount; k++) {

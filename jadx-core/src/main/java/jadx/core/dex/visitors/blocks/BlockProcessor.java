@@ -190,6 +190,11 @@ public class BlockProcessor extends AbstractVisitor {
 			if (arg.isLiteral()) {
 				return ((LiteralArg) arg).getLiteral() == ((LiteralArg) otherArg).getLiteral();
 			}
+
+			if (arg.isInsnWrap()) {
+				return false;
+			}
+
 			throw new JadxRuntimeException("Unexpected InsnArg types: " + arg + " and " + otherArg);
 		}
 		return false;

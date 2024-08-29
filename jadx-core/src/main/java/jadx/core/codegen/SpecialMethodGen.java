@@ -66,6 +66,30 @@ class StownByIndexHandler implements SpecialMethodHandler {
 	}
 }
 
+// ldobjbyvalue
+class LdojbbyvalueHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("[");
+		gen.addArg(code, insn.getArg(1), false);
+		code.add("]");
+	}
+}
+
+// stobjbyvalue
+class StojbbyvalueHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("[");
+		gen.addArg(code, insn.getArg(1), false);
+		code.add("]");
+		code.add(" = ");
+		gen.addArg(code, insn.getArg(2), false);
+	}
+}
+
 // stmodulevar
 class StModuleVarHandler implements SpecialMethodHandler {
 	@Override
@@ -176,6 +200,8 @@ public class SpecialMethodGen {
 		handlers.put("ldlexvar", new LdLexVarHandler());
 		handlers.put("stlexvar", new StLexVarHandler());
 		handlers.put("trystglobalbyname", new TrystglobalbynameHandler());
+		handlers.put("ldobjbyvalue", new LdojbbyvalueHandler());
+		handlers.put("stobjbyvalue", new StojbbyvalueHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {

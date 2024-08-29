@@ -190,7 +190,7 @@ public class PrepareForCodeGen extends AbstractVisitor {
 		if (insn.getType() == InsnType.ARITH) {
 			ArithNode arith = (ArithNode) insn;
 			ArithOp op = arith.getOp();
-			if (op == ArithOp.ADD || op == ArithOp.MUL || op == ArithOp.AND || op == ArithOp.OR) {
+			if (op == ArithOp.ADD || op == ArithOp.MUL || op == ArithOp.AND || op == ArithOp.OR || op == ArithOp.EXP) {
 				for (int i = 0; i < 2; i++) {
 					InsnArg arg = arith.getArg(i);
 					if (arg.isInsnWrap()) {

@@ -4,6 +4,7 @@ public enum ArithOp {
 	ADD("+"),
 	SUB("-"),
 	MUL("*"),
+	EXP("**"),
 	DIV("/"),
 	REM("%"),
 

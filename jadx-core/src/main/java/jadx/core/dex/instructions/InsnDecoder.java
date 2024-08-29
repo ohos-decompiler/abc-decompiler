@@ -215,7 +215,7 @@ public class InsnDecoder {
 
 			// todo: A ** acc
 			case 0x1b:
-				return arith2(insn, ArithOp.MUL);
+				return arith2(insn, ArithOp.EXP);
 
 			// isfalse
 			case 0x23:
@@ -321,12 +321,6 @@ public class InsnDecoder {
 
 			case 0x73:
 				return callrange(insn);
-			case 0x3f: {
-				ArgType clsType = ArgType.object(getAbcString(asmItem, 2));
-				InsnNode constClsInsn = new ConstClassNode(clsType);
-				constClsInsn.setResult(InsnArg.reg(accIndex, ArgType.generic(Consts.CLASS_CLASS, clsType)));
-				return constClsInsn;
-			}
 
 			case 0xcf: // copyrestargs
 				return copyrestargs(insn);
@@ -592,18 +586,6 @@ public class InsnDecoder {
 				return invoke;
 			}
 
-			case 0x8c: {
-				Asm.AsmItem asmItem1 = insn.getAsmItem();
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "tryldglobalbyname");
-				List<InstFmt> formats = asmItem1.getIns().getFormat();
-				String gName = ((InstFmt.SId) formats.get(2)).getString(asmItem1);
-
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(gName)));
-				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
-				return invoke;
-			}
-
 			case 0x90: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				List<InstFmt> formats = asmItem1.getIns().getFormat();
@@ -712,6 +694,8 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0x8d:
+			case 0x7f:
 			case 0x40: {
 				Asm.AsmItem asmItem1 = insn.getAsmItem();
 				List<InstFmt> formats = asmItem1.getIns().getFormat();
@@ -720,8 +704,16 @@ public class InsnDecoder {
 				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
 				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(name, false)));
 				invoke.addArg(InsnArg.reg(accIndex, ArgType.NARROW));
-				invoke.setResult(InsnArg.reg(accIndex, ArgType.NARROW));
 				return invoke;
+			}
+
+			case 0x3f:
+			case 0x8c:
+			case 0x41: {
+				ArgType clsType = ArgType.object(getAbcString(asmItem, 2));
+				InsnNode constClsInsn = new ConstClassNode(clsType);
+				constClsInsn.setResult(InsnArg.reg(accIndex, ArgType.generic(Consts.CLASS_CLASS, clsType)));
+				return constClsInsn;
 			}
 
 		}
