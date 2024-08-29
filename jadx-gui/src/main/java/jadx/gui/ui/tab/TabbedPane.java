@@ -485,6 +485,9 @@ public class TabbedPane extends JTabbedPane implements ITabStatesListener {
 			return;
 		}
 		ContentPanel newPanel = blueprint.getNode().getContentPanel(this);
+		if (newPanel == null) {
+			return;
+		}
 		FocusManager.listen(newPanel);
 		addContentPanel(newPanel);
 	}
