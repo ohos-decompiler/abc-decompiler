@@ -14,6 +14,9 @@ public class NameMapper {
 	public static final Pattern VALID_JAVA_IDENTIFIER = Pattern.compile(
 			"\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
+	public static final Pattern VALID_ABC_IDENTIFIER = Pattern.compile(
+			"#\\d+#");
+
 	private static final Pattern VALID_JAVA_FULL_IDENTIFIER = Pattern.compile(
 			"(" + VALID_JAVA_IDENTIFIER + "\\.)*" + VALID_JAVA_IDENTIFIER);
 
@@ -80,7 +83,7 @@ public class NameMapper {
 	public static boolean isValidIdentifier(String str) {
 		return notEmpty(str)
 				&& !isReserved(str)
-				&& VALID_JAVA_IDENTIFIER.matcher(str).matches();
+				&& (VALID_JAVA_IDENTIFIER.matcher(str).matches() || VALID_ABC_IDENTIFIER.matcher(str).matches());
 	}
 
 	public static boolean isValidFullIdentifier(String str) {

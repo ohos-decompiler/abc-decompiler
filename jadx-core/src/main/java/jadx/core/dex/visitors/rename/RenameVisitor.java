@@ -187,7 +187,7 @@ public class RenameVisitor extends AbstractVisitor {
 			String alias = mth.getAlias();
 			boolean notValid = args.isRenameValid() && !NameMapper.isValidIdentifier(alias);
 			boolean notPrintable = args.isRenamePrintable() && !NameMapper.isAllCharsPrintable(alias);
-			if (notValid || notPrintable) {
+			if (notPrintable) {
 				mth.rename(aliasProvider.forMethod(mth));
 				mth.addAttr(new RenameReasonAttr(mth, notValid, notPrintable));
 			}
