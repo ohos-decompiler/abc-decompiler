@@ -546,10 +546,10 @@ public class ClassGen {
 		}
 	}
 
-	public void useType(ICodeWriter code, ArgType type) {
+	public boolean useType(ICodeWriter code, ArgType type) {
 		PrimitiveType stype = type.getPrimitiveType();
 		if (stype == null) {
-			code.add(type.toString());
+			return false;
 		} else if (stype == PrimitiveType.OBJECT) {
 			if (type.isGenericType()) {
 				code.add(type.getObject());
@@ -562,6 +562,8 @@ public class ClassGen {
 		} else {
 			code.add(stype.getLongName());
 		}
+
+		return true;
 	}
 
 	public void useClass(ICodeWriter code, String rawCls) {

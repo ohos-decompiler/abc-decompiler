@@ -187,8 +187,9 @@ public class InsnGen {
 		if (codeVar.isFinal()) {
 			code.add("final ");
 		}
-		useType(code, codeVar.getType());
-		code.add(' ');
+		if (useType(code, codeVar.getType())) {
+			code.add(' ');
+		}
 		defVar(code, codeVar);
 	}
 
@@ -289,12 +290,12 @@ public class InsnGen {
 		mgen.getClassGen().useClass(code, cls);
 	}
 
-	protected void useType(ICodeWriter code, ArgType type) {
+	protected boolean useType(ICodeWriter code, ArgType type) {
 		if (type == null) {
-			code.add("??");
-			return;
+			return false;
 		}
-		mgen.getClassGen().useType(code, type);
+
+		return mgen.getClassGen().useType(code, type);
 	}
 
 	public void makeInsn(InsnNode insn, ICodeWriter code) throws CodegenException {
