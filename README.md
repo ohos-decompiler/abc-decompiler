@@ -13,6 +13,8 @@ abc-decompiler 基于 [jadx](https://github.com/skylot/jadx/) 和 [abcde](https:
 ![img.png](img.png)
 
 
+
+
 ## #2 进展与计划
 
 分析了方舟的字节码，有很大部分与 DEX 字节码语义相近，且 jadx 比较成熟，于是基于 jadx 实现反编译器。
@@ -36,5 +38,36 @@ jadx 自带的 Pass: [jadx-core/src/main/java/jadx/core/dex/visitors](./jadx-cor
 
 ## #4 编译
 
-需要编译 patch 过的 [abcde](https://github.com/ohos-decompiler/abcde) 库（增加导出了一个接口）
+JDK 版本：JDK17+
+
+需要编译 patch 过的 [abcde](https://github.com/ohos-decompiler/abcde) 库并安装到本地 maven 仓
+
+```
+ ./gradlew publishToMavenLocal
+```
+
+如果正确执行，命令行中会有如下输出
+
+```
+Done!
+groupId: io.github.yricky.oh //这部分为下述$groupId
+version: 0.1.0-dev-4d03a43 //这部分为下述$version
+```
+
+vscode 全局搜索替换项目下所有 gradle文件中的 `io.github.yricky.oh:abcde-jvm:0.1.0-dev-xxx` 为实际版本号.
+
+```
+   dependencies {
+        // implementation("$groupId:abcde-jvm:$version")
+        implementation("io.github.yricky.oh:abcde-jvm:0.1.0-dev-4d03a43")
+    }
+```
+
+然后编译 abc-decompiler
+
+```
+./gradlew dist
+```
+
+
 
