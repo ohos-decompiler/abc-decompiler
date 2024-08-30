@@ -13,20 +13,19 @@ abc-decompiler 基于 [jadx](https://github.com/skylot/jadx/) 和 [abcde](https:
 ![img.png](img.png)
 
 
-
-
 ## #2 进展与计划
 
 分析了方舟的字节码，有很大部分与 DEX 字节码语义相近，且 jadx 比较成熟，于是基于 jadx 实现反编译器。
 
 目前的进展：
-- 修改输入部分代码，可以拖入 abc 文件分析
-- 实现了部分字节码，目前实现指令 [207](https://github.com/ohos-decompiler/abc-decompiler/issues/6) 条，字节码总数：[282 条 (其中有几十条未使能的指令)](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/arkts-bytecode-fundamentals-V5#%E6%9C%AF%E8%AF%AD%E5%92%8C%E7%BA%A6%E6%9D%9F).
+- [x] 修改输入部分代码，可以拖入 abc 文件分析
+- [x] 粗略实现了字节码（大部分特殊指令采用伪函数实现），目前实现指令 [227](https://github.com/ohos-decompiler/abc-decompiler/issues/6) 条，字节码总数：[282 条 (其中可用指令条数为 227 条)](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/arkts-bytecode-fundamentals-V5#%E6%9C%AF%E8%AF%AD%E5%92%8C%E7%BA%A6%E6%9D%9F).
+- 优化字节码表示，根据需要定制 IR.
 
 计划：
-- 先补齐字节码，让代码能看.
-- 开发 abc 的反编译优化模块（在 jadx 中为 Pass），优化代码显示，让代码好看.
-- 实现数据流分析，自动化漏洞挖掘.
+- [x] 先补齐字节码，让代码能看.
+- [ ] 开发 abc 的反编译优化模块（在 jadx 中为 Pass），优化代码显示，让代码好看.
+- [ ] 实现数据流分析，自动化漏洞挖掘.
 
 
 ## #3 关键代码路径
