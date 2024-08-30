@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import kotlin.Pair;
 import me.yricky.oh.abcd.cfm.AbcClass;
 import me.yricky.oh.abcd.cfm.AbcMethod;
 import me.yricky.oh.abcd.cfm.FieldType;
@@ -73,29 +72,6 @@ public class InsnDecoder {
 		return instructions;
 	}
 
-	public String getAbcString(Asm.AsmItem asmItem, int strIdx) {
-		int stringOff = asmItem.getOpUnits().get(strIdx).intValue();
-		int x2 = asmItem.getAsm().getCode().getMethod().getRegion().getMslIndex().get(stringOff);
-		Pair<String, Integer> strItem = asmItem.getAsm().getCode().getAbc().stringItem(x2);
-		return strItem.getFirst();
-	}
-
-	public String searchMethod(InsnData insn) {
-		int offset = insn.getOffset();
-		while (offset >= 0) {
-			if (rinstructions[offset] == null) {
-				offset--;
-				continue;
-			}
-
-			if (rinstructions[offset].getType() == InsnType.IGET) {
-				return ((IndexInsnNode) rinstructions[offset]).getFieldName();
-			}
-			offset--;
-		}
-		return "Dummy";
-	}
-
 	public static int getIntOpUnit(Asm.AsmItem asmItem, int index) {
 		return asmItem.getOpUnits().get(index).intValue();
 	}
@@ -118,6 +94,7 @@ public class InsnDecoder {
 		int accRegister = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		int nOp = asmItem.getOpUnits().get(0).shortValue() & 0xff;
 		switch (nOp) {
+			case 0x8f:
 			case 0x44: // mov vA, vB
 			case 0x45:
 				RegisterArg dst = InsnArg.reg(asmItem.getOpUnits().get(1).intValue(), ArgType.NARROW);
@@ -131,19 +108,21 @@ public class InsnDecoder {
 			case 0:
 				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.NARROW), InsnArg.lit(0, ArgType.NARROW));
 
+			// ldnull
 			case 0x01: {
-				LiteralArg litArg = InsnArg.lit(0, ArgType.OBJECT);
-				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.OBJECT), litArg);
+				LiteralArg litArg = InsnArg.lit(0, ArgType.INT);
+				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.INT), litArg);
 			}
 
+			// ldtrue
 			case 0x02: {
-				LiteralArg litArg = InsnArg.lit(1, ArgType.BOOLEAN);
-				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.BOOLEAN), litArg);
+				LiteralArg litArg = InsnArg.lit(1, ArgType.INT);
+				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.INT), litArg);
 			}
 
 			case 0x03: {
-				LiteralArg litArg = InsnArg.lit(0, ArgType.BOOLEAN);
-				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.BOOLEAN), litArg);
+				LiteralArg litArg = InsnArg.lit(0, ArgType.INT);
+				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.INT), litArg);
 			}
 
 			case 0x63: {
@@ -151,6 +130,9 @@ public class InsnDecoder {
 				LiteralArg litArg = InsnArg.lit(asmItem.getOpUnits().get(1).longValue(), ArgType.BOOLEAN);
 				return insn(InsnType.CONST, InsnArg.reg(accRegister, ArgType.FLOAT), litArg);
 			}
+
+			case 0xd5:
+				return new InsnNode(InsnType.NOP, 0);
 
 			case 0x6a: {
 				ArgType clsType = ArgType.object("nan");
@@ -192,6 +174,13 @@ public class InsnDecoder {
 				return constClsInsn;
 			}
 
+			case 0xad: {
+				ArgType clsType = ArgType.object("ldsymbol");
+				InsnNode constClsInsn = new ConstClassNode(clsType);
+				constClsInsn.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
+				return constClsInsn;
+			}
+
 			case 0x61:
 				return insn(InsnType.MOVE, InsnArg.reg(asmItem.getOpUnits().get(1).intValue(), ArgType.NARROW),
 						InsnArg.reg(accRegister, ArgType.NARROW));
@@ -206,7 +195,7 @@ public class InsnDecoder {
 			case 0x11:
 				return cmp(accRegister, asmItem.getOpUnits().get(2).intValue(), accRegister, InsnType.CMP_L, ArgType.NARROW);
 
-			case 0xf:
+			case 0x0f:
 			case 0x28: // stricteq
 				return cmp(accRegister, asmItem.getOpUnits().get(2).intValue(), accRegister, InsnType.CMP_EQ, ArgType.NARROW);
 
@@ -263,6 +252,30 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0xab:
+				return invokeHelperArg1(insn, "getiterator", InsnArg.reg(accRegister, ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xac:
+				return invokeHelperArg1(insn, "closeiterator", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xaf:
+				return invokeHelperArg0(insn, "ldfunction", InsnArg.reg(accRegister, ArgType.OBJECT));
+			case 0xb0:
+				return invokeHelperArg0(insn, "debugger", null);
+
+			case 0xb1:
+				return invokeHelperArg1(insn, "creategeneratorobj", InsnArg.reg(getIntOpUnit(asmItem, 1), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xb2:
+				return invokeHelperArg2(insn, "createiterresultobj", InsnArg.reg(getIntOpUnit(asmItem, 1), ArgType.OBJECT),
+						InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT), InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xb3:
+				return createobjectwithexcludedkeys(insn, false);
+
 			// asyncfunctionenter
 			case 0xae: {
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 0, "asyncfunctionenter");
@@ -302,8 +315,8 @@ public class InsnDecoder {
 			case 0x51: // jnez
 				return new IfNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset(), accRegister, IfOp.NE);
 
+			case 0x98:
 			case 0x4d:
-				return new GotoNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset());
 			case 0x4e:
 				return new GotoNode(asmItem.getOpUnits().get(1).intValue() + asmItem.getCodeOffset());
 
@@ -313,7 +326,7 @@ public class InsnDecoder {
 						null,
 						InsnArg.reg(accRegister, method.getReturnType()));
 			case 0x3e:
-				InsnNode constStrInsn = new ConstStringNode(getAbcString(asmItem, 1));
+				InsnNode constStrInsn = new ConstStringNode(getStringOpFormat(asmItem, 1));
 				constStrInsn.setResult(InsnArg.reg(accRegister, ArgType.STRING));
 				return constStrInsn;
 
@@ -339,12 +352,26 @@ public class InsnDecoder {
 			case 0x73:
 				return callrange(insn);
 
+			case 0x72:
+			case 0x71:
+				return invokeHelperArg2(insn, "createregexpwithliteral",
+						InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
 			case 0xcf: // copyrestargs
 				return copyrestargs(insn);
 			case 0xb9: // supercallspread
 				return supercallspread(insn);
 
+			case 0xb5:
+			case 0xb4:
+				return invokeHelperArg2(insn, "newobjapply", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
 			// defineclasswithbuffer
+			case 0x75:
 			case 0x35: {
 				List<InstFmt> formats = asmItem.getIns().getFormat();
 				MethodItem targetMth = ((InstFmt.MId) formats.get(2)).getMethod(asmItem);
@@ -365,6 +392,7 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0x81:
 			case 0x06: {
 
 				List<InstFmt> formats = asmItem.getIns().getFormat();
@@ -396,17 +424,7 @@ public class InsnDecoder {
 
 			// newlexenvwithname
 			case 0xb6: {
-
-				List<InstFmt> formats = asmItem.getIns().getFormat();
-				LiteralArray la = ((InstFmt.LId) formats.get(2)).getLA(asmItem);
-
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "newlexenvwithname");
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(1).intValue())));
-
-				invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
-				return invoke;
+				return newlexenvwithname(insn, asmItem, accRegister, false);
 			}
 
 			// stmodulevar
@@ -422,15 +440,8 @@ public class InsnDecoder {
 
 			// stlexvar
 			case 0x8b:
-			case 0x3d: {
-
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 3, "stlexvar");
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3);
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(1).intValue())));
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(2).intValue())));
-				invoke.addReg(accRegister, ArgType.OBJECT);
-				return invoke;
-			}
+			case 0x3d:
+				return stlexvar(insn, asmItem, accRegister, false);
 
 			// definefunc
 			case 0x74:
@@ -447,6 +458,7 @@ public class InsnDecoder {
 			}
 
 			// definemethod
+			case 0xbe:
 			case 0x34: {
 				List<InstFmt> formats = asmItem.getIns().getFormat();
 				MethodItem targetMth = ((InstFmt.MId) formats.get(2)).getMethod(asmItem);
@@ -497,6 +509,133 @@ public class InsnDecoder {
 				return invoke;
 			}
 
+			case 0x26:
+				return invokeHelperArg2(insn, "instanceof", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.INT));
+
+			case 0x48:
+			case 0x47:
+				return invokeHelperArg2(insn, "set_global", InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2), false)),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0xc1:
+			case 0x76:
+				return invokeHelperArg1(insn, "gettemplateobject", InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xb7:
+				return invokeHelperArg1(insn, "createasyncgeneratorobj", InsnArg.reg(getIntOpUnit(asmItem, 1), ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xc7:
+			case 0x77:
+				return makePutField(asmItem, accRegister, getIntOpUnit(asmItem, 2), "__proto__");
+
+			case 0x93:
+			case 0x49:
+				return invokeHelperArg1(insn, "ldthisbyname", InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2), false)),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0x94:
+			case 0x4a:
+				return invokeHelperArg2(insn, "stthisbyname", InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2), false)),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0x95:
+			case 0x4b:
+				return invokeHelperArg1(insn, "ldthisbyvalue", InsnArg.reg(accRegister, ArgType.INT),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0x96:
+			case 0x4c:
+				return invokeHelperArg2(insn, "stthisbyvalue", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.INT),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0x97:
+				// asyncgeneratorreject
+				return invokeHelperArg2(insn, "asyncgeneratorreject", InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.reg(getIntOpUnit(asmItem, 1), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xc8:
+			case 0x78:
+				return invokeHelperArg3(insn, "stownbyvalue", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0xb8:
+				return invokeHelperArg3(insn, "asyncgeneratorresolve", InsnArg.reg(getIntOpUnit(asmItem, 1), ArgType.OBJECT),
+						InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.NARROW), InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xd4:
+			case 0x8e:
+				return invokeHelperArg3(insn, "stownbynamewithnameset", InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.OBJECT),
+						InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0xd2:
+			case 0x99:
+				return invokeHelperArg3(insn, "stownbyvaluewithnameset", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0xd3:
+				return invokeHelperArg1(insn, "ldbigint", InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 1))),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xd7:
+				return invokeHelperArg1(insn, "getasynciterator", InsnArg.reg(accRegister, ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xd8:
+				return invokeHelperArg2(insn, "ldprivateproperty", InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 2))),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))),
+						InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xd9:
+				return invokeHelperArg3(insn, "stprivateproperty", InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 2))),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))),
+						InsnArg.reg(getIntOpUnit(asmItem, 4), ArgType.OBJECT), InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xda:
+				return invokeHelperArg3(insn, "testin", InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 2))),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))),
+						InsnArg.reg(accRegister, ArgType.OBJECT), InsnArg.reg(accRegister, ArgType.OBJECT));
+
+			case 0xdb:
+				return invokeHelperArg3(insn, "definefieldbyname", InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.OBJECT),
+						InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						null);
+
+			case 0xd6:
+				return invokeHelperArg2(insn, "setgeneratorstate", InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 1))),
+						null);
+
+			case 0xd1:
+			case 0xd0:
+				return invokeHelperArg3(insn, "stsuperbyname", InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))),
+						InsnArg.reg(accRegister, ArgType.NARROW), InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.OBJECT),
+						null);
+
+			case 0xba:
+				return invokeHelperArg3(insn, "apply", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.reg(getIntOpUnit(asmItem, 3), ArgType.OBJECT),
+						InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
+			case 0xbb:
+				return supercallarrowrange(insn);
+
 			case 0xbc: {
 
 				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 4, "definegettersetterbyvalue");
@@ -513,6 +652,10 @@ public class InsnDecoder {
 			case 0x7a:
 				return makePutField(asmItem, getIntOpUnit(asmItem, 3), accRegister, 2);
 
+			case 0x7b:
+				return invokeHelperArg1(insn, "getmodulenamespace", InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 1))),
+						InsnArg.reg(accRegister, ArgType.NARROW));
+
 			case 0x29:
 				return callargsN(insn, 0);
 			case 0x2a:
@@ -528,26 +671,15 @@ public class InsnDecoder {
 			case 0x20:
 				return not(insn);
 			case 0x32:
-				return supercallthisrange(insn);
+				return supercallthisrange(insn, false);
 
 			case 0x83:
 			case 0x08:
 				return newobjrange(insn);
 
 			case 0x8a:
-			case 0x3c: {
-
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "ldlexvar");
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
-
-				int a = asmItem.getOpUnits().get(1).intValue();
-				int b = asmItem.getOpUnits().get(2).intValue();
-
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(a)));
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(b)));
-				invoke.setResult(InsnArg.reg(accRegister, ArgType.NARROW));
-				return invoke;
-			}
+			case 0x3c:
+				return ldlexvar(insn, asmItem, accRegister, false);
 
 			case 0x85:
 			case 0x37: {
@@ -605,13 +737,7 @@ public class InsnDecoder {
 				return makeGetField(asmItem, accRegister, accRegister, 2);
 
 			case 0x09: {
-
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "newlexenv");
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-				int a = asmItem.getOpUnits().get(1).intValue();
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(a)));
-				invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
-				return invoke;
+				return newlexenv(insn, asmItem, accRegister, false);
 			}
 
 			case 0x69: {
@@ -628,6 +754,10 @@ public class InsnDecoder {
 				invoke.setResult(InsnArg.reg(accRegister, ArgType.INT));
 				return invoke;
 			}
+
+			case 0xbd:
+				return invokeHelperArg1(insn, "dynamicimport", InsnArg.reg(accRegister, ArgType.NARROW),
+						InsnArg.reg(accRegister, ArgType.NARROW));
 
 			case 0xbf:
 				return invokeHelperArg1(insn, "resumegenerator", InsnArg.reg(accRegister, ArgType.NARROW),
@@ -682,6 +812,12 @@ public class InsnDecoder {
 						InsnArg.reg(accRegister, ArgType.NARROW), InsnArg.reg(asmItem.getOpUnits().get(2).intValue(), ArgType.NARROW),
 						InsnArg.reg(accRegister, ArgType.NARROW));
 
+			case 0x89:
+			case 0x3b:
+				return invokeHelperArg3(insn, "stobjbyindex", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+						InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))), InsnArg.reg(accRegister, ArgType.NARROW), null);
+
+			case 0x92:
 			case 0x46: {
 				List<InstFmt> formats = asmItem.getIns().getFormat();
 				String name = ((InstFmt.SId) formats.get(2)).getString(asmItem);
@@ -714,7 +850,7 @@ public class InsnDecoder {
 			case 0x3f:
 			case 0x8c:
 			case 0x41: {
-				ArgType clsType = ArgType.object(getAbcString(asmItem, 2));
+				ArgType clsType = ArgType.object(getStringOpFormat(asmItem, 2));
 				InsnNode constClsInsn = new ConstClassNode(clsType);
 				constClsInsn.setResult(InsnArg.reg(accRegister, ArgType.generic(Consts.CLASS_CLASS, clsType)));
 				return constClsInsn;
@@ -735,7 +871,7 @@ public class InsnDecoder {
 					invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(2).intValue())));
 					return invoke;
 				}
-				case 0: {
+				case 0x00: {
 					MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "throw");
 					InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
 					invoke.addArg(InsnArg.reg(accRegister, ArgType.NARROW));
@@ -747,15 +883,43 @@ public class InsnDecoder {
 				case 0x06:
 					return invokeHelperArg1(insn, "throw.undefinedifhole",
 							InsnArg.reg(asmItem.getOpUnits().get(1).intValue(), ArgType.NARROW), null);
+				case 0x02:
+					return invokeHelperArg0(insn, "throw.patternnoncoercible", null);
 			}
 		} else if (nOp == 0xfd) {
 			nOp = asmItem.getOpUnits().get(1).intValue();
 			switch (nOp) {
-				case 0x08: {
+				case 0x08:
 					return invokeHelperArg2(insn, "ldobjbyindex",
-							InsnArg.reg(accRegister, ArgType.NARROW), InsnArg.reg(asmItem.getOpUnits().get(1).intValue(), ArgType.NARROW),
+							InsnArg.reg(accRegister, ArgType.NARROW), InsnArg.reg(asmItem.getOpUnits().get(2).intValue(), ArgType.NARROW),
 							InsnArg.reg(accRegister, ArgType.NARROW));
-				}
+				case 0x09:
+					return invokeHelperArg3(insn, "stobjbyindex", InsnArg.reg(getIntOpUnit(asmItem, 2), ArgType.OBJECT),
+							InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))), InsnArg.reg(accRegister, ArgType.NARROW), null);
+
+				case 0x00:
+					createobjectwithexcludedkeys(insn, true);
+
+				case 0x06:
+					return supercallthisrange(insn, true);
+				case 0x0c:
+					return ldlexvar(insn, asmItem, accRegister, true);
+				case 0x0d:
+					return stlexvar(insn, asmItem, accRegister, true);
+				case 0x02:
+					return newlexenv(insn, asmItem, accRegister, true);
+				case 0x03:
+					return newlexenvwithname(insn, asmItem, accRegister, true);
+			}
+		} else if (nOp == 0xfb) {
+			nOp = asmItem.getOpUnits().get(1).intValue();
+			switch (nOp) {
+				case 0x00:
+					return invokeHelperArg1(insn, "callruntime.notifyconcurrentresult",
+							InsnArg.reg(accRegister, ArgType.NARROW), null);
+				case 0x03:
+					return invokeHelperArg1(insn, "callruntime.topropertykey",
+							InsnArg.reg(accRegister, ArgType.NARROW), null);
 			}
 		}
 
@@ -763,9 +927,82 @@ public class InsnDecoder {
 
 	}
 
+	private @NotNull InvokeNode newlexenvwithname(InsnData insn, Asm.AsmItem asmItem, int accRegister, boolean wide) {
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+
+		List<InstFmt> formats = asmItem.getIns().getFormat();
+		LiteralArray la = ((InstFmt.LId) formats.get(2 + k)).getLA(asmItem);
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "newlexenvwithname");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
+		invoke.addArg(InsnArg.wrapArg(new ConstStringNode(la.toString(), false)));
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(1 + k).intValue())));
+
+		invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
+		return invoke;
+	}
+
+	private @NotNull InvokeNode newlexenv(InsnData insn, Asm.AsmItem asmItem, int accRegister, boolean wide) {
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "newlexenv");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+
+		int a = asmItem.getOpUnits().get(1 + k).intValue();
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(a)));
+		invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
+		return invoke;
+	}
+
+	private @NotNull InvokeNode stlexvar(InsnData insn, Asm.AsmItem asmItem, int accRegister, boolean wide) {
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 3, "stlexvar");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3);
+
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(1 + k).intValue())));
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(2 + k).intValue())));
+		invoke.addReg(accRegister, ArgType.OBJECT);
+		return invoke;
+	}
+
+	private @NotNull InvokeNode ldlexvar(InsnData insn, Asm.AsmItem asmItem, int accRegister, boolean wide) {
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 2, "ldlexvar");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2);
+
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+		int a = asmItem.getOpUnits().get(k + 1).intValue();
+		int b = asmItem.getOpUnits().get(k + 2).intValue();
+
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(a)));
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(b)));
+		invoke.setResult(InsnArg.reg(accRegister, ArgType.NARROW));
+		return invoke;
+	}
+
 	private @NotNull InsnNode makePutField(Asm.AsmItem asmItem, int objReg, int valueReg, int fieldIndex) {
 		List<InstFmt> formats = asmItem.getIns().getFormat();
 		String fieldName = ((InstFmt.SId) formats.get(fieldIndex)).getString(asmItem);
+		FieldInfo iputFld2 = FieldInfo.fromAsm(root, asmItem, fieldName);
+
+		InsnNode iputInsn2 = new IndexInsnNode(InsnType.IPUT, iputFld2, 2);
+		iputInsn2.addArg(InsnArg.reg(valueReg, tryResolveFieldType(iputFld2)));
+		iputInsn2.addArg(InsnArg.reg(objReg, iputFld2.getDeclClass().getType()));
+		return iputInsn2;
+	}
+
+	private @NotNull InsnNode makePutField(Asm.AsmItem asmItem, int objReg, int valueReg, String fieldName) {
 		FieldInfo iputFld2 = FieldInfo.fromAsm(root, asmItem, fieldName);
 
 		InsnNode iputInsn2 = new IndexInsnNode(InsnType.IPUT, iputFld2, 2);
@@ -919,6 +1156,13 @@ public class InsnDecoder {
 		return new InvokeNode(mthInfo, insn, type, false);
 	}
 
+	private InsnNode invokeHelperArg0(InsnData insn, String helper, RegisterArg result) {
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 0, helper);
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 0);
+		invoke.setResult(result);
+		return invoke;
+	}
+
 	private InsnNode invokeHelperArg1(InsnData insn, String helper, InsnArg arg, RegisterArg result) {
 		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, helper);
 		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
@@ -943,6 +1187,52 @@ public class InsnDecoder {
 		invoke.addArg(arg2);
 		invoke.addArg(arg3);
 		invoke.setResult(result);
+		return invoke;
+	}
+
+	private InsnNode createobjectwithexcludedkeys(InsnData insn, boolean wide) {
+		Asm.AsmItem asmItem = insn.getAsmItem();
+		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
+		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
+
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+
+		int n = getIntOpUnit(asmItem, 1 + k);
+		int objectRegister = getIntOpUnit(asmItem, 2 + k);
+		int baseReg = getIntOpUnit(asmItem, 3 + k);
+
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 3 + n, "createobjectwithexcludedkeys");
+
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3 + n);
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(n)));
+		invoke.addReg(objectRegister, ArgType.OBJECT); // object
+		for (int i = 0; i <= n; i++) {
+			invoke.addReg(baseReg + i, ArgType.NARROW);
+		}
+		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
+		return invoke;
+	}
+
+	private InsnNode supercallarrowrange(InsnData insn) {
+		Asm.AsmItem asmItem = insn.getAsmItem();
+		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
+		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
+
+		int n = getIntOpUnit(asmItem, 1);
+		int baseReg = getIntOpUnit(asmItem, 2);
+
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 2 + n, "supercallarrowrange");
+
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 2 + n);
+		invoke.addArg(InsnArg.wrapArg(new ConstIntNode(n)));
+		invoke.addReg(accReg, ArgType.OBJECT); // object
+		for (int i = 0; i < n; i++) {
+			invoke.addReg(baseReg + i, ArgType.NARROW);
+		}
+		invoke.setResult(InsnArg.reg(accReg, ArgType.OBJECT));
 		return invoke;
 	}
 
@@ -1036,16 +1326,22 @@ public class InsnDecoder {
 		return invoke;
 	}
 
-	private InsnNode supercallthisrange(InsnData insn) {
+	private InsnNode supercallthisrange(InsnData insn, boolean wide) {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		List<Number> opUnits = asmItem.getOpUnits();
+
+		int k = 0;
+		if (wide) {
+			k++;
+		}
+
 		int baseArg = opUnits.get(3).intValue();
 		int argc = opUnits.get(2).intValue();
 
 		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, argc, "super");
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.DIRECT, argc);
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, argc);
 
 		for (int i = 0; i < argc; i++) {
 			invoke.addReg(baseArg + i, ArgType.OBJECT);

@@ -12,7 +12,7 @@ public class Consts {
 	public static final boolean DEBUG_RESTRUCTURE = false;
 	public static final boolean DEBUG_EVENTS = true;
 
-	public static final String CLASS_OBJECT = "java.lang.Object";
+	public static final String CLASS_OBJECT = "Object";
 	public static final String CLASS_STRING = "java.lang.String";
 	public static final String CLASS_CLASS = "java.lang.Class";
 	public static final String CLASS_THROWABLE = "java.lang.Throwable";
