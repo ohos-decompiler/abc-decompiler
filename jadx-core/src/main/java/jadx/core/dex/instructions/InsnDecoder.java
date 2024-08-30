@@ -897,7 +897,7 @@ public class InsnDecoder {
 							InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))), InsnArg.reg(accRegister, ArgType.NARROW), null);
 
 				case 0x00:
-					createobjectwithexcludedkeys(insn, true);
+					return createobjectwithexcludedkeys(insn, true);
 
 				case 0x06:
 					return supercallthisrange(insn, true);
