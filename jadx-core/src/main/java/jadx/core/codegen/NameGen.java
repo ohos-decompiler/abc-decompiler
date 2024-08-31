@@ -290,6 +290,14 @@ public class NameGen {
 	private String makeNameFromInvoke(InvokeNode inv, MethodInfo callMth) {
 		String name = callMth.getAlias();
 		ClassInfo declClass = callMth.getDeclClass();
+		if(name.equals("ldexternalmodulevar")) {
+			String impName = getConstStringArg(inv.getArg(1));
+			String localName = getConstStringArg(inv.getArg(2));
+			return localName;
+		}
+		if(name.equals("createobjectwithbuffer")) {
+			return "obj";
+		}
 		if ("getInstance".equals(name)) {
 			// e.g. Cipher.getInstance
 			return makeNameForClass(declClass);
@@ -308,11 +316,6 @@ public class NameGen {
 		}
 		if (name.startsWith("to")) {
 			return fromName(name.substring(2));
-		}
-		if(name.equals("ldexternalmodulevar")) {
-			String impName = getConstStringArg(inv.getArg(1));
-			String localName = getConstStringArg(inv.getArg(2));
-			return localName;
 		}
 		return name;
 	}

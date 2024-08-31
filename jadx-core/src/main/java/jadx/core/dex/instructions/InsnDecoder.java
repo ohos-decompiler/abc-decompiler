@@ -826,19 +826,10 @@ public class InsnDecoder {
 		if (nOp == 0xfe) {
 			nOp = asmItem.getOpUnits().get(1).intValue();
 			switch (nOp) {
-				case 0x09: {
-					return invokeHelperArg2(insn, "throw_undefinedifholewithname", InsnArg.reg(accRegister, ArgType.NARROW),
-							InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))), null);
-				}
+				case 0x09:
 				case 0x08:
-					return invokeHelperArg1(insn, "throw.ifnotobject", InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 2))),
-							null);
-				case 0x07: {
-					MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "throw$ifsupernotcorrectcall");
-					InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
-					invoke.addArg(InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 2))));
-					return invoke;
-				}
+				case 0x07:
+					return new InsnNode(InsnType.NOP, 0);
 				case 0x00: {
 					MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "throw");
 					InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
