@@ -599,10 +599,7 @@ public class InsnDecoder {
 						InsnArg.reg(accRegister, ArgType.OBJECT), InsnArg.reg(accRegister, ArgType.OBJECT));
 
 			case 0xdb:
-				return invokeHelperArg3(insn, "definefieldbyname", getRegisterArg(asmItem, 3, ArgType.OBJECT),
-						InsnArg.wrapArg(new ConstStringNode(getStringOpFormat(asmItem, 2))),
-						InsnArg.reg(accRegister, ArgType.NARROW),
-						null);
+				return makePutField(asmItem, getRegisterByOpIndex(asmItem, 3), accRegister, 2);
 
 			case 0xd6:
 				return invokeHelperArg2(insn, "setgeneratorstate", InsnArg.reg(accRegister, ArgType.NARROW),
@@ -1086,14 +1083,12 @@ public class InsnDecoder {
 		return invoke;
 	}
 
-	private @NotNull InsnNode makePutField(Asm.AsmItem asmItem, int objReg, int valueReg, int fieldIndex) {
-		List<InstFmt> formats = asmItem.getIns().getFormat();
-		String fieldName = ((InstFmt.SId) formats.get(fieldIndex)).getString(asmItem);
+	private @NotNull InsnNode makePutField(Asm.AsmItem asmItem, int objReg, int valueReg, int fieldNameOpIndex) {
+		String fieldName = getStringOpFormat(asmItem, fieldNameOpIndex);
 		FieldInfo iputFld2 = FieldInfo.fromAsm(root, asmItem, fieldName);
-
 		InsnNode iputInsn2 = new IndexInsnNode(InsnType.IPUT, iputFld2, 2);
-		iputInsn2.addArg(InsnArg.reg(valueReg, tryResolveFieldType(iputFld2)));
-		iputInsn2.addArg(InsnArg.reg(objReg, iputFld2.getDeclClass().getType()));
+		iputInsn2.addArg(InsnArg.reg(valueReg, ArgType.NARROW));
+		iputInsn2.addArg(InsnArg.reg(objReg, ArgType.OBJECT));
 		return iputInsn2;
 	}
 
