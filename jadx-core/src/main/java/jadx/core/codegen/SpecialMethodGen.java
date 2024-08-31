@@ -97,13 +97,24 @@ class StojbbyvalueHandler implements SpecialMethodHandler {
 class StModuleVarHandler implements SpecialMethodHandler {
 	@Override
 	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
-		code.add("__module__[");
+		code.add("_module_");
 		gen.addArg(code, insn.getArg(1), false);
-		code.add("]");
+		code.add("_");
 		code.add(" = ");
 		gen.addArg(code, insn.getArg(0), false);
 	}
 }
+
+// ldlocalmodulevar
+class LdlocalModuleVarHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		code.add("_module_");
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("_");
+	}
+}
+
 
 // trystglobalbyname
 class TrystglobalbynameHandler implements SpecialMethodHandler {
@@ -226,6 +237,7 @@ public class SpecialMethodGen {
 		handlers.put("ldobjbyvalue", new LdojbbyvalueHandler());
 		handlers.put("stobjbyvalue", new StojbbyvalueHandler());
 		handlers.put("definefunc", new DefineFuncHandler());
+		handlers.put("ldlocalmodulevar", new LdlocalModuleVarHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
