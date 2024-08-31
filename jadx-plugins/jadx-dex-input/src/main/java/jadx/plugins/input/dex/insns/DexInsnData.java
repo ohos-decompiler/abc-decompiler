@@ -86,6 +86,11 @@ public class DexInsnData implements InsnData {
 	}
 
 	@Override
+	public String getString() {
+		return asmItem.getIns().getInstruction().toString();
+	}
+
+	@Override
 	public byte[] getByteCode() {
 		return externalReader.getByteCode(insnStart, length * 2); // a unit is 2 bytes
 	}
