@@ -926,7 +926,7 @@ public class InsnDecoder {
 
 				case 0x02:
 					return invokeHelperArg3(insn, "definefieldbyindex", getRegisterArg(asmItem, 4, ArgType.OBJECT),
-							getRegisterArg(asmItem, 3, ArgType.NARROW), InsnArg.reg(accRegister, ArgType.NARROW), null);
+							InsnArg.wrapArg(new ConstIntNode(getIntOpUnit(asmItem, 3))), InsnArg.reg(accRegister, ArgType.NARROW), null);
 
 				case 0x03:
 					return invokeHelperArg1(insn, "callruntime.topropertykey",
