@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import me.yricky.oh.abcd.code.TryBlock;
 import org.jetbrains.annotations.Nullable;
 
 import me.yricky.oh.abcd.cfm.AbcMethod;
@@ -20,7 +21,6 @@ import jadx.api.plugins.input.data.ITry;
 import jadx.api.plugins.input.data.impl.CatchData;
 import jadx.api.plugins.input.data.impl.TryData;
 import jadx.api.plugins.input.insns.InsnData;
-import jadx.plugins.input.dex.DexException;
 import jadx.plugins.input.dex.insns.DexInsnData;
 import jadx.plugins.input.dex.insns.DexInsnFormat;
 import jadx.plugins.input.dex.insns.DexInsnInfo;
@@ -128,22 +128,28 @@ public class DexCodeReader implements ICodeReader {
 
 	@Override
 	public List<ITry> getTries() {
-		int triesOffset = getTriesOffset();
-		if (triesOffset == -1) {
+		Code codeItem = abcMethod.getCodeItem();
+		int triesCount = codeItem.getTriesSize();
+		if (triesCount == 0) {
 			return Collections.emptyList();
 		}
-		int triesCount = getTriesCount();
-		Map<Integer, ICatch> catchHandlers = getCatchHandlers(triesOffset + 8 * triesCount, in.copy());
-		in.pos(triesOffset);
+
+		List<TryBlock> tryBlocks = codeItem.getTryBlocks();
 		List<ITry> triesList = new ArrayList<>(triesCount);
 		for (int i = 0; i < triesCount; i++) {
-			int startAddr = in.readInt();
-			int insnsCount = in.readUShort();
-			int handlerOff = in.readUShort();
-			ICatch catchHandler = catchHandlers.get(handlerOff);
-			if (catchHandler == null) {
-				throw new DexException("Catch handler not found by byte offset: " + handlerOff);
+			TryBlock tryBlock = tryBlocks.get(i);
+			int startAddr = tryBlock.getStartPc();
+			int insnsCount = tryBlock.getLength();
+
+			ArrayList<TryBlock.CatchBlock> catchBlocks = tryBlock.getCatchBlocks();
+			int[] addrs = new int[catchBlocks.size()];
+			String[] types = new String[catchBlocks.size()];
+			for (int j = 0; j < catchBlocks.size(); j++) {
+				TryBlock.CatchBlock catchBlock = catchBlocks.get(j);
+				addrs[j] = catchBlock.getHandlerPc();
+				types[j] = String.format("ExceptionI%d", catchBlock.getTypeIdx());
 			}
+			CatchData catchHandler = new CatchData(addrs, types, -1);
 			triesList.add(new TryData(startAddr, startAddr + insnsCount - 1, catchHandler));
 		}
 		return triesList;
