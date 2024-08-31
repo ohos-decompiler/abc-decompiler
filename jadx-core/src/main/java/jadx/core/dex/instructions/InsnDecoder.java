@@ -197,10 +197,10 @@ public class InsnDecoder {
 						getRegisterArg(asmItem, 1, ArgType.NARROW));
 
 			case 0x13:
-				return cmp(accRegister, getRegisterByOpIndex(asmItem, 2), accRegister, InsnType.CMP_G, ArgType.NARROW);
+				return cmp(getRegisterByOpIndex(asmItem, 2), accRegister, accRegister, InsnType.CMP_G, ArgType.NARROW);
 
 			case 0x11:
-				return cmp(accRegister, getRegisterByOpIndex(asmItem, 2), accRegister, InsnType.CMP_L, ArgType.NARROW);
+				return cmp(getRegisterByOpIndex(asmItem, 2), accRegister, accRegister, InsnType.CMP_L, ArgType.NARROW);
 
 			case 0x0f:
 			case 0x28: // stricteq
@@ -211,10 +211,10 @@ public class InsnDecoder {
 				return cmp(accRegister, getRegisterByOpIndex(asmItem, 2), accRegister, InsnType.CMP_NE, ArgType.NARROW);
 
 			case 0x14:
-				return cmp(accRegister, getRegisterByOpIndex(asmItem, 2), accRegister, InsnType.CMP_GE, ArgType.NARROW);
+				return cmp(getRegisterByOpIndex(asmItem, 2), accRegister,  accRegister, InsnType.CMP_GE, ArgType.NARROW);
 
 			case 0x12:
-				return cmp(accRegister, getRegisterByOpIndex(asmItem, 2), accRegister, InsnType.CMP_LE, ArgType.NARROW);
+				return cmp(getRegisterByOpIndex(asmItem, 2), accRegister, accRegister, InsnType.CMP_LE, ArgType.NARROW);
 
 			case 0x22:
 				return dec(insn);
@@ -1195,9 +1195,9 @@ public class InsnDecoder {
 		return inode;
 	}
 
-	private InsnNode cmp(int a1, int a2, int dst, InsnType itype, ArgType argType) {
+	private InsnNode cmp(int a1, int a2, int resultRegister, InsnType itype, ArgType argType) {
 		InsnNode inode = new InsnNode(itype, 2);
-		inode.setResult(InsnArg.reg(dst, ArgType.INT));
+		inode.setResult(InsnArg.reg(resultRegister, ArgType.INT));
 		inode.addArg(InsnArg.reg(a1, argType));
 		inode.addArg(InsnArg.reg(a2, argType));
 		return inode;

@@ -429,6 +429,13 @@ public class InsnGen {
 				break;
 
 			case CMP_L:
+				code.add('(');
+				addArg(code, insn.getArg(0));
+				code.add(" < ");
+				addArg(code, insn.getArg(1));
+				code.add(" ? 1 : 0)");
+				break;
+
 			case CMP_G:
 				code.add('(');
 				addArg(code, insn.getArg(0));
