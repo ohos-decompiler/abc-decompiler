@@ -315,7 +315,7 @@ public class InsnDecoder {
 			case 0x4f: // jeqz
 			case 0x50:
 			case 0x9a:
-				return new IfNode(getIntOpUnit(asmItem, 1) + asmItem.getCodeOffset(), accRegister, IfOp.NE);
+				return new IfNode(getIntOpUnit(asmItem, 1) + asmItem.getCodeOffset(), accRegister, IfOp.EQ);
 
 			case 0x9b:
 			case 0x9c:
