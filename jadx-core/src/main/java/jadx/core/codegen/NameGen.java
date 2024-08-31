@@ -11,6 +11,8 @@ import jadx.core.dex.attributes.AFlag;
 import jadx.core.dex.attributes.nodes.LoopLabelAttr;
 import jadx.core.dex.info.ClassInfo;
 import jadx.core.dex.info.MethodInfo;
+import jadx.core.dex.instructions.ConstStringNode;
+import jadx.core.dex.instructions.InsnType;
 import jadx.core.dex.instructions.InvokeNode;
 import jadx.core.dex.instructions.args.ArgType;
 import jadx.core.dex.instructions.args.CodeVar;
@@ -243,7 +245,7 @@ public class NameGen {
 		switch (insn.getType()) {
 			case INVOKE:
 				InvokeNode inv = (InvokeNode) insn;
-				return makeNameFromInvoke(inv.getCallMth());
+				return makeNameFromInvoke(inv, inv.getCallMth());
 
 			case CONSTRUCTOR:
 				ConstructorInsn co = (ConstructorInsn) insn;
@@ -277,7 +279,15 @@ public class NameGen {
 		return null;
 	}
 
-	private String makeNameFromInvoke(MethodInfo callMth) {
+	private String getConstStringArg(InsnArg arg) {
+		InsnNode wrapInsn = ((InsnWrapArg)arg).getWrapInsn();
+		if(wrapInsn.getType() == InsnType.CONST_STR) {
+			return ((ConstStringNode)wrapInsn).getString();
+		}
+		return null;
+	}
+
+	private String makeNameFromInvoke(InvokeNode inv, MethodInfo callMth) {
 		String name = callMth.getAlias();
 		ClassInfo declClass = callMth.getDeclClass();
 		if ("getInstance".equals(name)) {
@@ -298,6 +308,11 @@ public class NameGen {
 		}
 		if (name.startsWith("to")) {
 			return fromName(name.substring(2));
+		}
+		if(name.equals("ldexternalmodulevar")) {
+			String impName = getConstStringArg(inv.getArg(1));
+			String localName = getConstStringArg(inv.getArg(2));
+			return localName;
 		}
 		return name;
 	}

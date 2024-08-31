@@ -969,8 +969,8 @@ public class InsnDecoder {
 	}
 
 	private @NotNull InvokeNode ldexternalmodulevar(InsnData insn, Asm.AsmItem asmItem, int accRegister, boolean wide) {
-		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 1, "ldexternalmodulevar");
-		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 1);
+		MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 3, "ldexternalmodulevar");
+		InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3);
 		int slotIndex = 1;
 		if(wide) {
 			slotIndex += 1;
@@ -979,6 +979,8 @@ public class InsnDecoder {
 		ModuleLiteralArray.RegularImport imp =
 				abcClass.getModuleInfo().getRegularImports().get(getIntOpUnit(asmItem, slotIndex));
 		invoke.addArg(InsnArg.wrapArg(new ConstStringNode(imp.toString(), false)));
+		invoke.addArg(InsnArg.wrapArg(new ConstStringNode(imp.getImportName(), false)));
+		invoke.addArg(InsnArg.wrapArg(new ConstStringNode(imp.getLocalName(), false)));
 		invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
 		return invoke;
 	}
