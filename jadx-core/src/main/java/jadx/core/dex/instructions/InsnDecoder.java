@@ -460,13 +460,7 @@ public class InsnDecoder {
 			case 0x34: {
 				List<InstFmt> formats = asmItem.getIns().getFormat();
 				MethodItem targetMth = ((InstFmt.MId) formats.get(2)).getMethod(asmItem);
-				MethodInfo mthInfo = MethodInfo.fromAsm(root, insn.getAsmItem(), 3, "definemethod");
-				InvokeNode invoke = new InvokeNode(mthInfo, InvokeType.STATIC, 3);
-				invoke.addArg(InsnArg.reg(accRegister, ArgType.OBJECT));
-				invoke.addArg(InsnArg.wrapArg(new ConstStringNode(targetMth.getName(), false)));
-				invoke.addArg(InsnArg.wrapArg(new ConstIntNode(asmItem.getOpUnits().get(3).intValue())));
-				invoke.setResult(InsnArg.reg(accRegister, ArgType.OBJECT));
-				return invoke;
+				return makeGetField(asmItem, accRegister, accRegister, targetMth.getName());
 			}
 
 			// ldexternalmodulevar
@@ -1098,6 +1092,15 @@ public class InsnDecoder {
 		List<InstFmt> formats = asmItem.getIns().getFormat();
 		String gName = ((InstFmt.SId) formats.get(nameOpIndex)).getString(asmItem);
 		FieldInfo igetFld2 = FieldInfo.fromAsm(root, asmItem, gName);
+		InsnNode igetInsn2 = new IndexInsnNode(InsnType.IGET, igetFld2, 1);
+		igetInsn2.setResult(InsnArg.reg(resultRegister, tryResolveFieldType(igetFld2)));
+		igetInsn2.addArg(InsnArg.reg(objectReg, igetFld2.getDeclClass().getType()));
+		return igetInsn2;
+	}
+
+	private @NotNull InsnNode makeGetField(Asm.AsmItem asmItem, int objectReg, int resultRegister, String fieldName) {
+		List<InstFmt> formats = asmItem.getIns().getFormat();
+		FieldInfo igetFld2 = FieldInfo.fromAsm(root, asmItem, fieldName);
 		InsnNode igetInsn2 = new IndexInsnNode(InsnType.IGET, igetFld2, 1);
 		igetInsn2.setResult(InsnArg.reg(resultRegister, tryResolveFieldType(igetFld2)));
 		igetInsn2.addArg(InsnArg.reg(objectReg, igetFld2.getDeclClass().getType()));

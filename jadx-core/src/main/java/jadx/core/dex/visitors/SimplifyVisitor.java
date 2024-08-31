@@ -286,6 +286,10 @@ public class SimplifyVisitor extends AbstractVisitor {
 				}
 
 				IfCondition condition = ((TernaryInsn) ternary_insn).getCondition();
+				if(condition.getCompare() == null) {
+					return;
+				}
+
 				InsnArg condition_arg0_wrap = condition.getCompare().getInsn().getArg(0);
 				InsnArg condition_arg1_wrap = condition.getCompare().getInsn().getArg(1);
 				// check the ternary expression is comparing to null
@@ -300,14 +304,6 @@ public class SimplifyVisitor extends AbstractVisitor {
 					}
 				}
 			}
-//			if (wi.getType() == InsnType.CMP_L || wi.getType() == InsnType.CMP_G) {
-//				if (insn.getArg(1).isZeroLiteral()) {
-//					// insn.changeCondition(insn.getOp(), wi.getArg(0).duplicate(), wi.getArg(1).duplicate());
-//					// InsnRemover.unbindInsn(mth, wi);
-//				} else {
-//					LOG.warn("TODO: cmp {}", insn);
-//				}
-//			}
 		}
 	}
 

@@ -149,6 +149,18 @@ class LdexternalModuleVarHandler implements SpecialMethodHandler {
 	}
 }
 
+// definefunc
+class DefineFuncHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		gen.addArg(code, insn.getArg(0), false);
+	}
+}
+
+
+
+
+
 // definegettersetterbyvalue
 class DefineGetterSetterByValueHandler implements SpecialMethodHandler {
 
@@ -213,6 +225,7 @@ public class SpecialMethodGen {
 		handlers.put("trystglobalbyname", new TrystglobalbynameHandler());
 		handlers.put("ldobjbyvalue", new LdojbbyvalueHandler());
 		handlers.put("stobjbyvalue", new StojbbyvalueHandler());
+		handlers.put("definefunc", new DefineFuncHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
