@@ -297,22 +297,10 @@ public class Smali {
 			smali.startLine(".registers ").add(Integer.toString(regsCount));
 
 			writeTries(codeReader, line);
-			IDebugInfo debugInfo = codeReader.getDebugInfo();
-			List<ILocalVar> localVars = debugInfo != null ? debugInfo.getLocalVars() : Collections.emptyList();
-			formatMthParamInfo(mth, smali, line, regsCount, localVars);
-			if (debugInfo != null) {
-				formatDbgInfo(debugInfo, localVars, line);
-			}
+
 			smali.newLine();
 			smali.startLine();
-			// first pass to fill payload offsets for switch instructions
-			codeReader.visitInstructions(insn -> {
-				Opcode opcode = insn.getOpcode();
-				if (opcode == PACKED_SWITCH || opcode == SPARSE_SWITCH) {
-					insn.decode();
-					line.addPayloadOffset(insn.getOffset(), insn.getTarget());
-				}
-			});
+
 			codeReader.visitInstructions(insn -> {
 				InsnNode node = decodeInsn(insn, line);
 				nodes.put((long) insn.getOffset(), node);
@@ -365,30 +353,15 @@ public class Smali {
 	private void formatInsn(InsnData insn, InsnNode node, LineInfo line) {
 		StringBuilder lw = line.getLineWriter();
 		lw.delete(0, lw.length());
-		fmtCols(insn, line);
-		if (fmtPayloadInsn(insn, line)) {
-			return;
-		}
-		lw.append(formatInsnName(insn)).append(" ");
-		fmtRegs(insn, node.getType(), line);
-		if (!tryFormatTargetIns(insn, node.getType(), line)) {
-			if (hasLiteral(insn)) {
-				lw.append(", ").append(literal(insn));
-			} else if (node.getType() == InsnType.INVOKE) {
-				lw.append(", ").append(method(insn));
-			} else if (insn.getIndexType() == InsnIndexType.FIELD_REF) {
-				lw.append(", ").append(field(insn));
-			} else if (insn.getIndexType() == InsnIndexType.STRING_REF) {
-				lw.append(", ").append(str(insn));
-			} else if (insn.getIndexType() == InsnIndexType.TYPE_REF) {
-				lw.append(", ").append(type(insn));
-			} else if (insn.getOpcode() == CONST_METHOD_HANDLE) {
-				lw.append(", ").append(methodHandle(insn));
-			} else if (insn.getOpcode() == CONST_METHOD_TYPE) {
-				lw.append(", ").append(proto(insn, insn.getIndex()));
-			}
-		}
+		lw.append(String.format(FMT_CODE_OFFSET + " ", insn.getOffset()));
+		lw.append(node.toString());
 		line.addInsnLine(insn.getOffset(), lw.toString());
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("  ");
+		sb.append(String.format(FMT_CODE_OFFSET + " ", insn.getOffset()));
+		sb.append(insn.getString());
+		line.addInsnLine(insn.getOffset(), sb.toString());
 	}
 
 	private String formatInsnName(InsnData insn) {

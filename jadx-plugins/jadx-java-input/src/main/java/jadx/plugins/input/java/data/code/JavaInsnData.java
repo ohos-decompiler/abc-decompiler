@@ -82,7 +82,12 @@ public class JavaInsnData implements InsnData {
 		return insnInfo.getName();
 	}
 
-	@Override
+    @Override
+    public String getString() {
+        return "";
+    }
+
+    @Override
 	public Asm.AsmItem getAsmItem() {
 		return null;
 	}

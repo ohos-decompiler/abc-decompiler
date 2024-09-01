@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import jadx.core.dex.instructions.IfOp;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -274,12 +275,39 @@ public class SimplifyVisitor extends AbstractVisitor {
 		InsnArg f = insn.getArg(0);
 		if (f.isInsnWrap()) {
 			InsnNode wi = ((InsnWrapArg) f).getWrapInsn();
-			if (wi.getType() == InsnType.CMP_L || wi.getType() == InsnType.CMP_G) {
-				if (insn.getArg(1).isZeroLiteral()) {
-					// insn.changeCondition(insn.getOp(), wi.getArg(0).duplicate(), wi.getArg(1).duplicate());
-					// InsnRemover.unbindInsn(mth, wi);
-				} else {
-					LOG.warn("TODO: cmp {}", insn);
+			// simplify "if (isfalse(istrue(xxx) == null ? 1 : 0) == null)" into "if (xxx == false)"
+			if (wi.getType() != InsnType.INVOKE || !((InvokeNode) wi).getCallMth().getName().equals("isfalse")) {
+				return;
+			}
+
+			// check the return value of "isfalse" is compared to null
+			if (insn.getOp() != IfOp.EQ || !insn.getArg(1).isZeroLiteral()) {
+				return;
+			}
+
+			if (wi.getArg(0).isInsnWrap()) {
+				InsnNode ternary_insn = ((InsnWrapArg) wi.getArg(0)).getWrapInsn();  // a ? b : c
+				if (ternary_insn.getType() != InsnType.TERNARY) {
+					return;
+				}
+
+				IfCondition condition = ((TernaryInsn) ternary_insn).getCondition();
+				if(condition.getCompare() == null) {
+					return;
+				}
+
+				InsnArg condition_arg0_wrap = condition.getCompare().getInsn().getArg(0);
+				InsnArg condition_arg1_wrap = condition.getCompare().getInsn().getArg(1);
+				// check the ternary expression is compared to null
+				if (condition.getCompare().getInsn().getOp() != IfOp.EQ || !condition_arg1_wrap.isZeroLiteral()) {
+					return;
+				}
+				if (condition_arg0_wrap.isInsnWrap()) {
+					InsnNode istrue_arg = ((InsnWrapArg) condition_arg0_wrap).getWrapInsn();
+					if (istrue_arg.getType() == InsnType.INVOKE && ((InvokeNode) istrue_arg).getCallMth().getName().equals("istrue")) {
+						insn.changeCondition(insn.getOp(), istrue_arg.getArg(0).duplicate(), LiteralArg.lit(0, ArgType.BOOLEAN));
+						InsnRemover.unbindInsn(mth, insn);
+					}
 				}
 			}
 		}

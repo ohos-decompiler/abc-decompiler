@@ -39,7 +39,7 @@ public class AttachTryCatchVisitor extends AbstractVisitor {
 		if (mth.isNoCode()) {
 			return;
 		}
-		// initTryCatches(mth, mth.getInstructions(), mth.getCodeReader().getTries());
+		 initTryCatches(mth, mth.getInstructions(), mth.getCodeReader().getTries());
 	}
 
 	private static void initTryCatches(MethodNode mth, InsnNode[] insnByOffset, List<ITry> tries) {

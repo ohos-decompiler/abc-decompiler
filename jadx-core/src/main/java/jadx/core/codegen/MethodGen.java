@@ -253,12 +253,12 @@ public class MethodGen {
 			}
 			code.add(' ');
 
-			if(i == 0){
+			if (i == 0) {
 				var.setName("functionObject");
-			} else if(i == 1) {
+			} else if (i == 1) {
 				var.setName("newTarget");
 			} else if (i > 2) {
-				var.setName("arg" + (i-3));
+				var.setName("arg" + (i - 3));
 			}
 
 			String varName = nameGen.assignArg(var);

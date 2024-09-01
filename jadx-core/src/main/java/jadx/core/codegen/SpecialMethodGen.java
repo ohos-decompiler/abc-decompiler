@@ -5,9 +5,12 @@ import java.util.Map;
 
 import jadx.api.ICodeWriter;
 import jadx.core.dex.info.MethodInfo;
+import jadx.core.dex.instructions.InsnType;
 import jadx.core.dex.instructions.InvokeNode;
 import jadx.core.dex.instructions.args.InsnArg;
+import jadx.core.dex.instructions.args.InsnWrapArg;
 import jadx.core.dex.instructions.args.LiteralArg;
+import jadx.core.dex.nodes.InsnNode;
 import jadx.core.dex.nodes.MethodNode;
 import jadx.core.utils.exceptions.CodegenException;
 
@@ -94,13 +97,24 @@ class StojbbyvalueHandler implements SpecialMethodHandler {
 class StModuleVarHandler implements SpecialMethodHandler {
 	@Override
 	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
-		code.add("__module__[");
+		code.add("_module_");
 		gen.addArg(code, insn.getArg(1), false);
-		code.add("]");
+		code.add("_");
 		code.add(" = ");
 		gen.addArg(code, insn.getArg(0), false);
 	}
 }
+
+// ldlocalmodulevar
+class LdlocalModuleVarHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		code.add("_module_");
+		gen.addArg(code, insn.getArg(0), false);
+		code.add("_");
+	}
+}
+
 
 // trystglobalbyname
 class TrystglobalbynameHandler implements SpecialMethodHandler {
@@ -146,6 +160,18 @@ class LdexternalModuleVarHandler implements SpecialMethodHandler {
 	}
 }
 
+// definefunc
+class DefineFuncHandler implements SpecialMethodHandler {
+	@Override
+	public void process(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
+		gen.addArg(code, insn.getArg(0), false);
+	}
+}
+
+
+
+
+
 // definegettersetterbyvalue
 class DefineGetterSetterByValueHandler implements SpecialMethodHandler {
 
@@ -154,6 +180,14 @@ class DefineGetterSetterByValueHandler implements SpecialMethodHandler {
 			LiteralArg la = (LiteralArg) arg;
 			return la.getLiteral() == 0;
 		}
+
+		if(arg.isInsnWrap()) {
+			InsnNode insn = ((InsnWrapArg) arg).getWrapInsn();
+			if(insn.getType() == InsnType.CAST) {
+				return isNull(insn.getArg(0));
+			}
+		}
+
 		return false;
 	}
 
@@ -202,6 +236,8 @@ public class SpecialMethodGen {
 		handlers.put("trystglobalbyname", new TrystglobalbynameHandler());
 		handlers.put("ldobjbyvalue", new LdojbbyvalueHandler());
 		handlers.put("stobjbyvalue", new StojbbyvalueHandler());
+		handlers.put("definefunc", new DefineFuncHandler());
+		handlers.put("ldlocalmodulevar", new LdlocalModuleVarHandler());
 	}
 
 	public boolean processMethod(InsnGen gen, InvokeNode insn, ICodeWriter code, MethodNode callMthNode) throws CodegenException {
