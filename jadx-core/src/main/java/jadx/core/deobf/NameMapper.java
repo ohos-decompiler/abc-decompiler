@@ -86,9 +86,7 @@ public class NameMapper {
 	public static boolean isValidIdentifier(String str) {
 		return notEmpty(str)
 				&& !isReserved(str)
-				&&
-				(VALID_JAVA_IDENTIFIER.matcher(str).matches()
-				|| VALID_ABC_IDENTIFIER.matcher(str).matches());
+				&& (VALID_JAVA_IDENTIFIER.matcher(str).matches() || VALID_ABC_IDENTIFIER.matcher(str).matches());
 	}
 
 	public static boolean isValidFullIdentifier(String str) {
