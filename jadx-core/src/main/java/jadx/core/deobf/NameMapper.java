@@ -116,6 +116,7 @@ public class NameMapper {
 				|| ch == '-'
 				|| ch == '+'
 				|| ch == '='
+				|| ch == '/'
 				|| ch == '#';
 	}
 

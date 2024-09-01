@@ -162,7 +162,7 @@ public class PackageHelper {
 		}
 		if (!merged.isEmpty()) {
 			merged.add(jPkg);
-			jPkg.setName(Utils.listToString(merged, ".", JPackage::getName));
+			jPkg.setName(Utils.listToString(merged, "/", JPackage::getName));
 		}
 		return jPkg;
 	}
