@@ -1171,8 +1171,7 @@ public class InsnDecoder {
 			argIndex++;
 		}
 
-		int insnArg = opUnits.get(argIndex).intValue();
-
+		int insnArg = getIntOpUnit(asmItem, argIndex);
 		InsnArg[] regs = new InsnArg[numArgs - insnArg];
 
 		for (int i = 0; i < numArgs - insnArg; i++) {
@@ -1341,8 +1340,7 @@ public class InsnDecoder {
 		Asm.AsmItem asmItem = insn.getAsmItem();
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
-		List<Number> opUnits = asmItem.getOpUnits();
-		int thisReg = opUnits.get(2).intValue();
+		int thisReg = getRegisterByOpIndex(asmItem, 2);
 
 		MethodInfo mthInfo = MethodInfo.fromAsm(root, asmItem, 3 + n, "callthisN");
 
@@ -1351,7 +1349,7 @@ public class InsnDecoder {
 		invoke.addReg(thisReg, ArgType.OBJECT); // object
 		invoke.addReg(accReg, ArgType.NARROW); // object
 		for (int i = 0; i < n; i++) {
-			invoke.addReg(opUnits.get(3 + i).intValue(), ArgType.NARROW);
+			invoke.addReg(getRegisterByOpIndex(asmItem, 3 + i), ArgType.NARROW);
 		}
 		invoke.setResult(InsnArg.reg(accReg, ArgType.NARROW));
 		return invoke;
@@ -1362,7 +1360,7 @@ public class InsnDecoder {
 		AbcMethod mth = asmItem.getAsm().getCode().getMethod();
 		int accReg = mth.getCodeItem().getNumArgs() + mth.getCodeItem().getNumVRegs();
 		List<Number> opUnits = asmItem.getOpUnits();
-		int thisReg = opUnits.get(3).intValue();
+		int thisReg = getRegisterByOpIndex(asmItem, 3);
 		int baseArg = thisReg + 1;
 		int argc = opUnits.get(2).intValue();
 
