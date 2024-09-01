@@ -12,6 +12,7 @@ import jadx.core.dex.attributes.nodes.LoopLabelAttr;
 import jadx.core.dex.info.ClassInfo;
 import jadx.core.dex.info.MethodInfo;
 import jadx.core.dex.instructions.ConstStringNode;
+import jadx.core.dex.instructions.IndexInsnNode;
 import jadx.core.dex.instructions.InsnType;
 import jadx.core.dex.instructions.InvokeNode;
 import jadx.core.dex.instructions.args.ArgType;
@@ -291,12 +292,20 @@ public class NameGen {
 		String name = callMth.getAlias();
 		ClassInfo declClass = callMth.getDeclClass();
 		if(name.equals("ldexternalmodulevar")) {
-			String impName = getConstStringArg(inv.getArg(1));
-			String localName = getConstStringArg(inv.getArg(2));
-			return localName;
+			return getConstStringArg(inv.getArg(2));
 		}
 		if(name.equals("createobjectwithbuffer")) {
 			return "obj";
+		}
+		if(name.equals("callthisN")) {
+			InsnArg arg = inv.getArg(2);
+			if(arg.isInsnWrap()) {
+				InsnNode wrapInsnNode = ((InsnWrapArg) inv.getArg(2)).getWrapInsn();
+				if(wrapInsnNode instanceof IndexInsnNode) {
+					IndexInsnNode indexInsnNode = (IndexInsnNode)wrapInsnNode;
+					return indexInsnNode.getFieldName();
+				}
+			}
 		}
 		if ("getInstance".equals(name)) {
 			// e.g. Cipher.getInstance
