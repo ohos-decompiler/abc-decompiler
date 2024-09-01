@@ -147,7 +147,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 		String fullObjectName = type.getObject();
 		String clsPkg;
 		String clsName;
-		int dot = fullObjectName.lastIndexOf('.');
+		int dot = fullObjectName.lastIndexOf('/');
 		if (dot == -1) {
 			clsPkg = "";
 			clsName = fullObjectName;
@@ -160,7 +160,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 		if (canBeInner) {
 			int sep = clsName.lastIndexOf('$');
 			if (sep > 0 && sep != clsName.length() - 1) {
-				String parClsName = clsPkg + '.' + clsName.substring(0, sep);
+				String parClsName = clsPkg + '/' + clsName.substring(0, sep);
 				if (clsPkg.isEmpty()) {
 					parClsName = clsName.substring(0, sep);
 				}
@@ -181,7 +181,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 	private static String makeFullClsName(String pkg, String shortName, ClassInfo parentClass, boolean alias, boolean raw) {
 		if (parentClass != null) {
 			String parentFullName;
-			char innerSep = raw ? '$' : '.';
+			char innerSep = raw ? '$' : '/';
 			if (alias) {
 				parentFullName = raw ? parentClass.makeAliasRawFullName() : parentClass.getAliasFullName();
 			} else {
@@ -189,7 +189,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 			}
 			return parentFullName + innerSep + shortName;
 		}
-		return pkg.isEmpty() ? shortName : pkg + '.' + shortName;
+		return pkg.isEmpty() ? shortName : pkg + '/' + shortName;
 	}
 
 	private String makeFullName() {
@@ -245,7 +245,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 		if (parentClass == null) {
 			return getAliasShortName();
 		}
-		return parentClass.getAliasNameWithoutPackage() + '.' + getAliasShortName();
+		return parentClass.getAliasNameWithoutPackage() + '/' + getAliasShortName();
 	}
 
 	@Nullable

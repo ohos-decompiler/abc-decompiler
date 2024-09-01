@@ -18,7 +18,7 @@ public class PackageInfo {
 			return existPkg;
 		}
 		PackageInfo newPkg;
-		int lastDot = fullPkg.lastIndexOf('.');
+		int lastDot = fullPkg.lastIndexOf('/');
 		if (lastDot == -1) {
 			// unknown root pkg
 			newPkg = new PackageInfo(fullPkg, null, fullPkg);
@@ -31,7 +31,7 @@ public class PackageInfo {
 	}
 
 	public static synchronized PackageInfo fromShortName(RootNode root, @Nullable PackageInfo parent, String shortName) {
-		String fullPkg = parent == null ? shortName : parent.getFullName() + '.' + shortName;
+		String fullPkg = parent == null ? shortName : parent.getFullName() + '/' + shortName;
 		PackageInfo existPkg = root.getInfoStorage().getPkg(fullPkg);
 		if (existPkg != null) {
 			return existPkg;
