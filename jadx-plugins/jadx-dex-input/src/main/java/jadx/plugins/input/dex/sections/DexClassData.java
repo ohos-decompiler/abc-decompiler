@@ -52,7 +52,7 @@ public class DexClassData implements IClassData {
 
 	@Override
 	public String getType() {
-		return abcClass.getName().replace("/", ".").replace("@", ".");
+		return abcClass.getName();
 	}
 
 	public class AccessFlags {

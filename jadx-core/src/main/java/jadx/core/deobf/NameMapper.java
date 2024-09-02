@@ -15,10 +15,13 @@ public class NameMapper {
 			"\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
 
 	public static final Pattern VALID_ABC_IDENTIFIER = Pattern.compile(
-			"#\\d+#");
+            "[a-zA-Z.@#][a-zA-Z0-9.@#+_\\-=]*");
 
 	private static final Pattern VALID_JAVA_FULL_IDENTIFIER = Pattern.compile(
 			"(" + VALID_JAVA_IDENTIFIER + "\\.)*" + VALID_JAVA_IDENTIFIER);
+
+	private static final Pattern VALID_ABC_FULL_IDENTIFIER = Pattern.compile(
+			"(" + VALID_ABC_IDENTIFIER + "/)*" + VALID_ABC_IDENTIFIER);
 
 	private static final Set<String> RESERVED_NAMES = new HashSet<>(
 			Arrays.asList(
@@ -89,7 +92,7 @@ public class NameMapper {
 	public static boolean isValidFullIdentifier(String str) {
 		return notEmpty(str)
 				&& !isReserved(str)
-				&& VALID_JAVA_FULL_IDENTIFIER.matcher(str).matches();
+				&& (VALID_JAVA_FULL_IDENTIFIER.matcher(str).matches() || VALID_ABC_FULL_IDENTIFIER.matcher(str).matches());
 	}
 
 	public static boolean isValidAndPrintable(String str) {
@@ -97,11 +100,24 @@ public class NameMapper {
 	}
 
 	public static boolean isValidIdentifierStart(int codePoint) {
-		return Character.isJavaIdentifierStart(codePoint);
+		char ch = Character.toChars(codePoint)[0];
+		return Character.isJavaIdentifierStart(codePoint)
+				|| ch == '@'
+				|| ch == '.'
+				|| ch == '#';
 	}
 
 	public static boolean isValidIdentifierPart(int codePoint) {
-		return Character.isJavaIdentifierPart(codePoint);
+		char ch = Character.toChars(codePoint)[0];
+
+		return Character.isJavaIdentifierPart(codePoint)
+				|| ch == '@'
+				|| ch == '.'
+				|| ch == '-'
+				|| ch == '+'
+				|| ch == '='
+				|| ch == '/'
+				|| ch == '#';
 	}
 
 	public static boolean isPrintableChar(char c) {
